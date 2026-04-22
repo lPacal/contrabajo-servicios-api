@@ -1,0 +1,21 @@
+❚❙❘ VERSION 0.2.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Implementacion de Seguridad Distribuida: Filtro JWT con validacion sync via RestTemplate a MS_Usuarios.
+├─• Logica de Negocio de Ofertas: CRUD completo con validaciones de integridad y reglas de negocio.
+├─• Sistema de RBAC (Role-Based Access Control): Proteccion de endpoints mediante @PreAuthorize y mapeo de perfiles.
+├─• Desarrollo de Capa de Servicio: Implementacion de OfertaServicioService con soporte para Soft Delete (Borrado logico).
+├─• Automatizacion de Datos: Creacion de DataSeeder para el poblado automatico de tablas maestras (Estados, Categorias, Precios).
+└─• Resolucion de conflictos de seguridad: Manejo de estados de sesion (Activo/Inactivo) y errores 403 Forbidden.
+
+->>> Implementar ciclo de vida de CitaServicio (Solicitar, Aceptar, Cancelar, Finalizar).
+->>> Creacion de DTOs para transferencia de datos segura entre microservicios y frontend.
+->>> Desarrollo de endpoints PATCH/UPDATE para gestion de ofertas existentes.
+->>> Integracion de sistema de Valoraciones y Feedback post-servicio.
+
+❚❙❘ VERSION 0.1.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Inicializacion del microservicio y configuracion de infraestructura (Spring Cloud Config Client).
+├─• Modelado de Persistencia: Creacion de entidades JPA para todo el ecosistema de servicios (Citas, Ofertas, Valoraciones).
+├─• Capa de Datos: Implementacion de Repositorios (Query Methods) para todas las tablas principales.
+├─• Arquitectura de Mensajeria: Habilitacion de WebSockets (STOMP + SockJS) para futuras notificaciones.
+└─• Configuracion de application.yml y conexion inicial a SQL Server.

@@ -16,3 +16,5 @@ spring:
   cloud:
     config:
       fail-fast: true
+jwt:
+  secret: EstaEsUnaClaveSecretaMuyLargaParaQueNadieLaAdivine123456789
