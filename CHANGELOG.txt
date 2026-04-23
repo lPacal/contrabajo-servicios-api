@@ -1,3 +1,31 @@
+❚❙❘ VERSION 0.3.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Implementacion de arquitectura DTO en Ofertas y Citas para evitar Mass Assignment y fuga de datos.
+├─• Desarrollo de Maquina de Estados para CitaServicio (Flujos: Solicitar, Aceptar, Cancelar, Finalizar).
+├─• Integracion de WebSockets (STOMP) en CitaServicioService para notificaciones en tiempo real por canales personalizados.
+└─• Fortalecimiento de seguridad con prevencion de IDOR y habilitacion de @EnableMethodSecurity para control de roles estricto.
+
+->>> Implementar API de Chat interno entre Cliente y Trabajador para coordinar detalles de la cita.
+->>> Desarrollar sistema de Valoraciones y Feedback (Reviews) post-servicio finalizado.
+->>> Incorporar filtros de busqueda avanzada y geolocalizacion para listar Ofertas de Servicio.
+
+❚❙❘ VERSION 0.2.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Implementacion de Seguridad Distribuida: Filtro JWT con validacion sync via RestTemplate a MS_Usuarios.
+├─• Logica de Negocio de Ofertas: CRUD completo con validaciones de integridad y reglas de negocio.
+├─• Sistema de RBAC (Role-Based Access Control): Proteccion de endpoints mediante @PreAuthorize y mapeo de perfiles.
+├─• Desarrollo de Capa de Servicio: Implementacion de OfertaServicioService con soporte para Soft Delete (Borrado logico).
+├─• Automatizacion de Datos: Creacion de DataSeeder para el poblado automatico de tablas maestras (Estados, Categorias, Precios).
+└─• Resolucion de conflictos de seguridad: Manejo de estados de sesion (Activo/Inactivo) y errores 403 Forbidden.
+
+❚❙❘ VERSION 0.1.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Inicializacion del microservicio y configuracion de infraestructura (Spring Cloud Config Client).
+├─• Modelado de Persistencia: Creacion de entidades JPA para todo el ecosistema de servicios (Citas, Ofertas, Valoraciones).
+├─• Capa de Datos: Implementacion de Repositorios (Query Methods) para todas las tablas principales.
+├─• Arquitectura de Mensajeria: Habilitacion de WebSockets (STOMP + SockJS) para futuras notificaciones.
+└─• Configuracion de application.yml y conexion inicial a SQL Server.
+
 ❚❙❘ VERSION 0.2.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Implementacion de Seguridad Distribuida: Filtro JWT con validacion sync via RestTemplate a MS_Usuarios.
