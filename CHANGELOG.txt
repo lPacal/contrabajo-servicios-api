@@ -1,3 +1,14 @@
+❚❙❘ VERSION 0.4.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Implementación del módulo de Valoraciones (Reseñas 1 a 5 estrellas).
+├─• Seguridad IDOR: Extracción de 'idCliente' directamente de los Claims del JWT para prevenir suplantación.
+├─• Máquina de Estados: Validación estricta para permitir reseñas solo en citas en estado FINALIZADO.
+├─• Regla Anti-Spam: Bloqueo de múltiples reseñas para una misma cita (Relación 1:1).
+└─• Creación de endpoints de consulta pública para leer historiales de reseñas por Trabajador y por Cliente.
+
+->>> Implementar cálculo dinámico (promedio de estrellas) en el perfil del trabajador.
+->>> Desarrollar módulo de Chat/Mensajería vinculado al ID de la cita.
+
 ❚❙❘ VERSION 0.3.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Implementacion de arquitectura DTO en Ofertas y Citas para evitar Mass Assignment y fuga de datos.
