@@ -1,3 +1,14 @@
+❚❙❘ VERSION 0.5.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Regla de Negocio: Restricción estricta de máximo 3 ofertas por trabajador (contando solo registros no borrados).
+├─• Lógica de Disponibilidad Exclusiva: Implementación de "switch" automático; al activar una oferta, el resto se desactiva.
+├─• Refuerzo de Seguridad en Citas: Validación de coordenadas obligatorias extraídas del Token antes de generar una solicitud.
+├─• Control de Valoraciones: Activación de seguridad a nivel de método (@PreAuthorize) y resolución de conflictos 403.
+└─• Optimización de Service: Filtro manual de Soft Delete en la capa de servicio para mayor control transaccional.
+
+->>> Implementar sistema de chat asíncrono para coordinación de citas.
+->>> Desarrollar panel de analíticas para el trabajador (Promedio de estrellas y servicios completados).
+
 ❚❙❘ VERSION 0.4.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Implementación del módulo de Valoraciones (Reseñas 1 a 5 estrellas).

@@ -31,13 +31,14 @@ public class CitaServicioService {
     // 1. SOLICITAR CITA 
     // ==========================================
     @Transactional
-    public CitaServicioResponseDTO solicitarServicio(SolicitarCitaDTO dto, Integer idCliente) {
+    public CitaServicioResponseDTO solicitarServicio(SolicitarCitaDTO dto, Integer idCliente, Integer idCoordenadas) {
         OfertaServicio oferta = ofertaRepository.findById(dto.getIdOfertaServicio())
                 .orElseThrow(() -> new RuntimeException("La oferta de servicio no existe."));
 
         if (!oferta.getDisponible() || oferta.getBorrado()) {
             throw new RuntimeException("Esta oferta de servicio ya no está disponible.");
         }
+        
         if (oferta.getIdTrabajador().equals(idCliente)) {
             throw new RuntimeException("No puedes solicitar un servicio publicado por ti mismo.");
         }
@@ -47,7 +48,12 @@ public class CitaServicioService {
 
         CitaServicio nuevaCita = new CitaServicio();
         nuevaCita.setComentario(dto.getComentario());
-        nuevaCita.setIdCoordenadas(dto.getIdCoordenadas());
+        
+        // ==========================================
+        // CAMBIO CRÍTICO: Usamos el ID que viene del Token, no del DTO
+        // ==========================================
+        nuevaCita.setIdCoordenadas(idCoordenadas); 
+        
         nuevaCita.setFechaSolicitud(LocalDateTime.now());
         nuevaCita.setOfertaServicio(oferta);
         nuevaCita.setCategoriaServicio(oferta.getCategoriaServicio());
@@ -57,14 +63,12 @@ public class CitaServicioService {
 
         CitaServicio guardada = citaRepository.save(nuevaCita);
 
-        // ==========================================
-        // NOTIFICAR AL TRABAJADOR QUE TIENE UN NUEVO CLIENTE
-        // ==========================================
+        // Notificación al trabajador
         enviarNotificacion(
             "NUEVO_SERVICIO", 
             guardada.getId().longValue(), 
             "¡Tienes una nueva solicitud de servicio para: " + oferta.getTitulo() + "!",
-            guardada.getIdTrabajador() // Destinatario
+            guardada.getIdTrabajador()
         );
 
         return convertirADto(guardada);

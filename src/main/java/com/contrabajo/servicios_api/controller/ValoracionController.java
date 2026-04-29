@@ -6,6 +6,7 @@ import com.contrabajo.servicios_api.utils.JwtUtil; // Asegúrate de importar tu 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -16,20 +17,19 @@ import java.util.Map;
 public class ValoracionController {
 
     private final ValoracionService valoracionService;
-    private final JwtUtil jwtUtil; // Inyectamos la herramienta para leer tokens
+    private final JwtUtil jwtUtil;
+    private final HttpServletRequest request; // Ya inyectado por Lombok
 
     @PostMapping
-    public ResponseEntity<?> crearValoracion(@RequestBody ValoracionRequestDTO dto, HttpServletRequest request) {
+    @PreAuthorize("hasRole('CLIENTE')") // <--- BLOQUEO DE SEGURIDAD NIVEL MÉTODO
+    public ResponseEntity<?> crearValoracion(@RequestBody ValoracionRequestDTO dto) {
         try {
-            // 1. Capturamos el token de la cabecera
+            // 1. Extraemos el token usando el helper o directamente
             String authHeader = request.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                throw new RuntimeException("Token de autorización no encontrado.");
-            }
-            String token = authHeader.substring(7); // Quitamos la palabra "Bearer "
+            String token = authHeader.substring(7);
 
-            // 2. Extraemos el ID del cliente directamente de la "maleta" del token
-            Integer idClienteAutenticado = jwtUtil.extractClaim(token, claims -> claims.get("id", Integer.class));
+            // 2. Extraemos el ID del cliente
+            Integer idClienteAutenticado = jwtUtil.extractId(token);
             
             // 3. Pasamos el ID al Service
             valoracionService.crearValoracion(dto, idClienteAutenticado);
@@ -39,6 +39,4 @@ public class ValoracionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
-    // ... (Tus otros endpoints GET se mantienen igual) ...
 }

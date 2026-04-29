@@ -20,25 +20,52 @@ public class CitaServicioController {
 
     private final CitaServicioService citaService;
     private final JwtUtil jwtUtil;
-    private final HttpServletRequest request;
+    
+    // Spring inyecta esto automáticamente para cada petición
+    private final HttpServletRequest request; 
 
-    // Método interno para extraer el ID del Token (igual que en Ofertas)
-    private Integer obtenerIdUsuarioAutenticado() {
+    // ==========================================
+    // HELPERS INTERNOS
+    // ==========================================
+    
+    // Helper 1: Extrae solo el Token limpio
+    private String obtenerToken() {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            return jwtUtil.extractId(token);
+            return authHeader.substring(7);
         }
-        throw new RuntimeException("Acceso denegado: Token inválido.");
+        throw new RuntimeException("Acceso denegado: Token inválido o no encontrado.");
     }
+
+    // Helper 2: Extrae el ID (reutilizado en aceptar, cancelar, finalizar)
+    private Integer obtenerIdUsuarioAutenticado() {
+        return jwtUtil.extractId(obtenerToken());
+    }
+
+    // ==========================================
+    // ENDPOINTS
+    // ==========================================
 
     // 1. SOLICITAR (Solo Clientes)
     @PostMapping("/solicitar")
     @PreAuthorize("hasRole('CLIENTE')")
-    public ResponseEntity<?> solicitarServicio(@RequestBody SolicitarCitaDTO dto) {
+    public ResponseEntity<?> solicitarServicio(@RequestBody SolicitarCitaDTO dto) { // Quitamos el HttpServletRequest de los parámetros
         try {
-            Integer idCliente = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO nuevaCita = citaService.solicitarServicio(dto, idCliente);
+            // 1. Usamos el Helper para sacar el token
+            String token = obtenerToken();
+
+            // 2. Extraemos ambos IDs usando tu JwtUtil
+            Integer idCliente = jwtUtil.extractId(token);
+            Integer idCoordenadas = jwtUtil.extraerIdCoordenadas(token);
+
+            // 3. Validar que el usuario sí tenga coordenadas en su token
+            if (idCoordenadas == null) {
+                throw new RuntimeException("Error: Tu cuenta no tiene una dirección válida registrada para solicitar servicios.");
+            }
+
+            // 4. Pasamos todo a la "máquina" del Service
+            CitaServicioResponseDTO nuevaCita = citaService.solicitarServicio(dto, idCliente, idCoordenadas);
+            
             return ResponseEntity.status(201).body(nuevaCita);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -47,7 +74,7 @@ public class CitaServicioController {
 
     // 2. ACEPTAR (De "Pendiente" a "Aceptado")
     @PatchMapping("/{id}/aceptar")
-    @PreAuthorize("hasRole('TRABAJADOR')") // Solo el trabajador puede decir "Sí, voy"
+    @PreAuthorize("hasRole('TRABAJADOR')")
     public ResponseEntity<?> aceptarCita(@PathVariable Integer id) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();

@@ -58,6 +58,10 @@ public class JwtUtil {
         return extractClaim(token, claims -> claims.get("rol", String.class));
     }
 
+    public Integer extraerIdCoordenadas(String token) {
+        return extractClaim(token, claims -> claims.get("idCoordenadas", Integer.class));
+    }
+
     // Validar que el token pertenezca al usuario (opcional, útil para filtros)
     public boolean validarToken(String token, String username) {
         final String tokenUsername = extractUsername(token);

@@ -31,13 +31,32 @@ public class OfertaServicioService {
     @Transactional
     public OfertaServicioResponseDTO crear(OfertaServicioCreateDTO dto, Integer idUsuarioAutenticado) {
         
+        // REGLA 1: Máximo 3 ofertas (No borradas)
+        List<OfertaServicio> ofertasVivas = ofertaRepository.findByIdTrabajadorOrderByFechaPublicacionDesc(idUsuarioAutenticado)
+                .stream()
+                .filter(os -> !os.getBorrado()) // Filtro manual de seguridad
+                .collect(Collectors.toList());
+
+        if (ofertasVivas.size() >= 3) {
+            throw new RuntimeException("Límite de ofertas alcanzado (Máximo 3). Para crear una nueva, debes eliminar alguna de las existentes.");
+        }
+
+        // REGLA 2: Solo 1 puede estar disponible. 
+        // Desactivamos todas las anteriores antes de crear la nueva.
+        for (OfertaServicio os : ofertasVivas) {
+            if (os.getDisponible()) {
+                os.setDisponible(false);
+                ofertaRepository.save(os);
+            }
+        }
+
         OfertaServicio nuevaOferta = new OfertaServicio();
         nuevaOferta.setTitulo(dto.getTitulo());
         nuevaOferta.setDescripcion(dto.getDescripcion());
         nuevaOferta.setPrecio(dto.getPrecio());
         
-        // La oferta nace disponible por defecto
-        nuevaOferta.setDisponible(true);
+        // La nueva oferta nace disponible y las otras ya se desactivaron arriba
+        nuevaOferta.setDisponible(true); 
         nuevaOferta.setBorrado(false);
         nuevaOferta.setIdTrabajador(idUsuarioAutenticado);
 
@@ -89,16 +108,40 @@ public class OfertaServicioService {
         
         OfertaServicio ofertaExistente = ofertaRepository.findById(idOferta)
                 .orElseThrow(() -> new RuntimeException("Oferta de servicio no encontrada."));
+        
+        if (ofertaExistente.getBorrado()) {
+            throw new RuntimeException("No se puede actualizar una oferta que ha sido eliminada.");
+        }
 
         if (!ofertaExistente.getIdTrabajador().equals(idUsuarioAutenticado)) {
             throw new RuntimeException("Acceso denegado: No puedes editar una oferta que no te pertenece.");
         }
 
+        // REGLA 3: Si se intenta activar esta oferta, hay que desactivar las demás
+        if (dto.getDisponible() != null && dto.getDisponible() == true) {
+            List<OfertaServicio> vivas = ofertaRepository.findByIdTrabajadorOrderByFechaPublicacionDesc(idUsuarioAutenticado)
+                    .stream()
+                    .filter(os -> !os.getBorrado()) // Filtro manual vital
+                    .collect(Collectors.toList());
+
+            for (OfertaServicio os : vivas) {
+                // Desactivamos todas menos la que estamos editando actualmente
+                if (!os.getId().equals(idOferta) && os.getDisponible()) {
+                    os.setDisponible(false);
+                    ofertaRepository.save(os);
+                }
+            }
+            ofertaExistente.setDisponible(true);
+        } else if (dto.getDisponible() != null && dto.getDisponible() == false) {
+            // Si el usuario simplemente quiso apagar su única oferta activa, lo permitimos
+            ofertaExistente.setDisponible(false);
+        }
+
         if (dto.getTitulo() != null) ofertaExistente.setTitulo(dto.getTitulo());
         if (dto.getDescripcion() != null) ofertaExistente.setDescripcion(dto.getDescripcion());
         if (dto.getPrecio() != null) ofertaExistente.setPrecio(dto.getPrecio());
-        if (dto.getDisponible() != null) ofertaExistente.setDisponible(dto.getDisponible());
         
+        // ... (resto del mapeo de categoría y tipo de precio igual) ...
         if (dto.getIdCategoria() != null) {
             CategoriaServicio cat = categoriaRepository.findById(dto.getIdCategoria())
                     .orElseThrow(() -> new RuntimeException("La categoría indicada no existe."));
@@ -128,6 +171,7 @@ public class OfertaServicioService {
         }
 
         ofertaExistente.setBorrado(true);
+        ofertaExistente.setDisponible(false);
         ofertaRepository.save(ofertaExistente);
     }
 
