@@ -1,33 +1,65 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# =============================
+# Contrabajo Microservices (.gitignore)
+# =============================
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Build outputs
+/target/
+/build/
+/out/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# Logs
+/logs/
+*.log
+*.log.*
+
+# IDE / Editor
+.idea/
 *.iml
 *.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+*.iws
 .vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache/
+.apt_generated/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp / cache
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Java / Maven
+*.class
+.mvn/timing.properties
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Spring local configs (no subir secretos locales)
+application-local.yml
+application-local.yaml
+application-local.properties
+application-dev-local.yml
+application-dev-local.yaml
+application-dev-local.properties
+
+# Credential and key files
+*.pem
+*.p12
+*.jks
+*.keystore
+
+# Test and runtime artifacts
+*.h2.db
+*.trace.db
