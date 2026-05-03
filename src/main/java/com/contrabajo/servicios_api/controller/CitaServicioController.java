@@ -1,10 +1,8 @@
 package com.contrabajo.servicios_api.controller;
 
-import com.contrabajo.servicios_api.dto.CitaServicioResponseDTO;
 import com.contrabajo.servicios_api.dto.SolicitarCitaDTO;
 import com.contrabajo.servicios_api.service.CitaServicioService;
 import com.contrabajo.servicios_api.utils.JwtUtil;
-
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,93 +18,84 @@ public class CitaServicioController {
 
     private final CitaServicioService citaService;
     private final JwtUtil jwtUtil;
-    
-    // Spring inyecta esto automáticamente para cada petición
-    private final HttpServletRequest request; 
+    private final HttpServletRequest request;
 
-    // ==========================================
-    // HELPERS INTERNOS
-    // ==========================================
-    
-    // Helper 1: Extrae solo el Token limpio
-    private String obtenerToken() {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
+    // Helper para obtener ID del usuario autenticado
+    private Integer getUid() {
+        String auth = request.getHeader("Authorization");
+        if (auth != null && auth.startsWith("Bearer ")) {
+            return jwtUtil.extractId(auth.substring(7));
         }
-        throw new RuntimeException("Acceso denegado: Token inválido o no encontrado.");
+        throw new RuntimeException("No autorizado.");
     }
 
-    // Helper 2: Extrae el ID (reutilizado en aceptar, cancelar, finalizar)
-    private Integer obtenerIdUsuarioAutenticado() {
-        return jwtUtil.extractId(obtenerToken());
-    }
-
-    // ==========================================
-    // ENDPOINTS
-    // ==========================================
-
-    // 1. SOLICITAR (Solo Clientes)
+    // 1. SOLICITAR
     @PostMapping("/solicitar")
     @PreAuthorize("hasRole('CLIENTE')")
-    public ResponseEntity<?> solicitarServicio(@RequestBody SolicitarCitaDTO dto) { // Quitamos el HttpServletRequest de los parámetros
+    public ResponseEntity<?> solicitar(@RequestBody SolicitarCitaDTO dto) {
         try {
-            // 1. Usamos el Helper para sacar el token
-            String token = obtenerToken();
-
-            // 2. Extraemos ambos IDs usando tu JwtUtil
-            Integer idCliente = jwtUtil.extractId(token);
-            Integer idCoordenadas = jwtUtil.extraerIdCoordenadas(token);
-
-            // 3. Validar que el usuario sí tenga coordenadas en su token
-            if (idCoordenadas == null) {
-                throw new RuntimeException("Error: Tu cuenta no tiene una dirección válida registrada para solicitar servicios.");
-            }
-
-            // 4. Pasamos todo a la "máquina" del Service
-            CitaServicioResponseDTO nuevaCita = citaService.solicitarServicio(dto, idCliente, idCoordenadas);
-            
-            return ResponseEntity.status(201).body(nuevaCita);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+            String token = request.getHeader("Authorization").substring(7);
+            Integer idC = jwtUtil.extractId(token);
+            Integer idCoor = jwtUtil.extraerIdCoordenadas(token);
+            if (idCoor == null) throw new RuntimeException("Cuenta sin dirección válida.");
+            return ResponseEntity.status(201).body(citaService.solicitarServicio(dto, idC, idCoor));
+        } catch (Exception e) { return error(e); }
     }
 
-    // 2. ACEPTAR (De "Pendiente" a "Aceptado")
+    // --- ACCIONES DEL TRABAJADOR ---
+
     @PatchMapping("/{id}/aceptar")
     @PreAuthorize("hasRole('TRABAJADOR')")
-    public ResponseEntity<?> aceptarCita(@PathVariable Integer id) {
-        try {
-            Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "ACEP", idUsuario);
-            return ResponseEntity.ok(cita);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<?> aceptar(@PathVariable Integer id) {
+        return handle(id, "CITA_HANDSHAKE");
     }
 
-    // 3. CANCELAR (Cualquiera de los dos puede arrepentirse)
-    @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<?> cancelarCita(@PathVariable Integer id) {
-        try {
-            Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CANC", idUsuario);
-            return ResponseEntity.ok(cita);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    // 4. FINALIZAR (El trabajo se completó)
-    @PatchMapping("/{id}/finalizar")
+    @PatchMapping("/{id}/rechazar")
     @PreAuthorize("hasRole('TRABAJADOR')")
-    public ResponseEntity<?> finalizarCita(@PathVariable Integer id) {
+    public ResponseEntity<?> rechazar(@PathVariable Integer id) {
+        return handle(id, "CITA_RECHAZADA");
+    }
+
+    @PatchMapping("/{id}/comenzar")
+    @PreAuthorize("hasRole('TRABAJADOR')")
+    public ResponseEntity<?> comenzar(@PathVariable Integer id) {
+        return handle(id, "CITA_COMENZANDO");
+    }
+
+    @PatchMapping("/{id}/finalizar-trabajo")
+    @PreAuthorize("hasRole('TRABAJADOR')")
+    public ResponseEntity<?> finalizarTrabajo(@PathVariable Integer id) {
+        return handle(id, "CITA_FINALIZANDO");
+    }
+
+    // --- ACCIONES DEL CLIENTE ---
+
+    @PatchMapping("/{id}/confirmar-inicio")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> confirmarInicio(@PathVariable Integer id) {
+        return handle(id, "CITA_EN_PROCESO");
+    }
+
+    @PatchMapping("/{id}/confirmar-finalizacion")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> confirmarFinalizacion(@PathVariable Integer id) {
+        return handle(id, "CITA_FINALIZADO");
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> cancelar(@PathVariable Integer id) {
+        return handle(id, "CITA_CANCELADO");
+    }
+
+    // Helpers de respuesta
+    private ResponseEntity<?> handle(Integer id, String cod) {
         try {
-            Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "FINA", idUsuario);
-            return ResponseEntity.ok(cita);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+            return ResponseEntity.ok(citaService.cambiarEstadoCita(id, cod, getUid()));
+        } catch (Exception e) { return error(e); }
+    }
+
+    private ResponseEntity<?> error(Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }

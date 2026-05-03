@@ -23,37 +23,25 @@ public class CitaServicioService {
     private final CitaServicioRepository citaRepository;
     private final OfertaServicioRepository ofertaRepository;
     private final EstadoRepository estadoRepository;
-    
-    // ¡LA MAGIA DE WEBSOCKETS INYECTADA AQUÍ!
     private final SimpMessagingTemplate messagingTemplate;
 
     // ==========================================
-    // 1. SOLICITAR CITA 
+    // 1. SOLICITAR SERVICIO (Inicio del flujo)
     // ==========================================
     @Transactional
     public CitaServicioResponseDTO solicitarServicio(SolicitarCitaDTO dto, Integer idCliente, Integer idCoordenadas) {
         OfertaServicio oferta = ofertaRepository.findById(dto.getIdOfertaServicio())
-                .orElseThrow(() -> new RuntimeException("La oferta de servicio no existe."));
+                .orElseThrow(() -> new RuntimeException("La oferta no existe."));
 
-        if (!oferta.getDisponible() || oferta.getBorrado()) {
-            throw new RuntimeException("Esta oferta de servicio ya no está disponible.");
-        }
-        
-        if (oferta.getIdTrabajador().equals(idCliente)) {
-            throw new RuntimeException("No puedes solicitar un servicio publicado por ti mismo.");
-        }
+        if (!oferta.getDisponible() || oferta.getBorrado()) 
+            throw new RuntimeException("Oferta no disponible.");
 
-        Estado estadoPendiente = estadoRepository.findByCodigo("PEND")
-                .orElseThrow(() -> new RuntimeException("Error interno: Estado Pendiente no configurado."));
+        Estado estadoPendiente = estadoRepository.findByCodigo("CITA_PENDIENTE")
+                .orElseThrow(() -> new RuntimeException("Estado inicial no configurado."));
 
         CitaServicio nuevaCita = new CitaServicio();
         nuevaCita.setComentario(dto.getComentario());
-        
-        // ==========================================
-        // CAMBIO CRÍTICO: Usamos el ID que viene del Token, no del DTO
-        // ==========================================
         nuevaCita.setIdCoordenadas(idCoordenadas); 
-        
         nuevaCita.setFechaSolicitud(LocalDateTime.now());
         nuevaCita.setOfertaServicio(oferta);
         nuevaCita.setCategoriaServicio(oferta.getCategoriaServicio());
@@ -63,80 +51,96 @@ public class CitaServicioService {
 
         CitaServicio guardada = citaRepository.save(nuevaCita);
 
-        // Notificación al trabajador
-        enviarNotificacion(
-            "NUEVO_SERVICIO", 
-            guardada.getId().longValue(), 
-            "¡Tienes una nueva solicitud de servicio para: " + oferta.getTitulo() + "!",
-            guardada.getIdTrabajador()
-        );
+        // NOTIFICACIÓN: Se le avisa al TRABAJADOR que tiene una nueva solicitud
+        enviarNotificacion("NUEVA_SOLICITUD", guardada.getId().longValue(), 
+            "Nueva solicitud: " + oferta.getTitulo(), guardada.getIdTrabajador());
 
         return convertirADto(guardada);
     }
 
     // ==========================================
-    // 2. CAMBIAR ESTADO (Aceptar, Cancelar, Finalizar)
+    // 2. CAMBIAR ESTADO (La Máquina de Estados)
     // ==========================================
     @Transactional
-    public CitaServicioResponseDTO cambiarEstadoCita(Integer idCita, String nuevoCodigoEstado, Integer idUsuarioAutenticado) {
+    public CitaServicioResponseDTO cambiarEstadoCita(Integer idCita, String nuevoCodigo, Integer idUser) {
         CitaServicio cita = citaRepository.findById(idCita)
                 .orElseThrow(() -> new RuntimeException("Cita no encontrada."));
 
-        boolean esCliente = cita.getIdCliente().equals(idUsuarioAutenticado);
-        boolean esTrabajador = cita.getIdTrabajador().equals(idUsuarioAutenticado);
+        String actual = cita.getEstado().getCodigo();
+        boolean esC = cita.getIdCliente().equals(idUser);
+        boolean esT = cita.getIdTrabajador().equals(idUser);
 
-        if (!esCliente && !esTrabajador) {
-            throw new RuntimeException("Acceso denegado: No tienes permisos sobre esta cita.");
+        if (!esC && !esT) throw new RuntimeException("Sin permisos sobre esta cita.");
+
+        String msg = "";
+        Integer destino = null;
+
+        switch (nuevoCodigo) {
+            case "CITA_RECHAZADA":
+                if (!esT) throw new RuntimeException("Solo el trabajador puede rechazar.");
+                if (!actual.equals("CITA_PENDIENTE")) throw new RuntimeException("No se puede rechazar.");
+                msg = "El trabajador ha rechazado la solicitud.";
+                destino = cita.getIdCliente();
+                break;
+
+            case "CITA_HANDSHAKE":
+                if (!esT) throw new RuntimeException("Solo el trabajador acepta el inicio.");
+                if (!actual.equals("CITA_PENDIENTE")) throw new RuntimeException("Estado no válido.");
+                msg = "¡Cita aceptada! Handshake realizado.";
+                destino = cita.getIdCliente();
+                break;
+
+            case "CITA_COMENZANDO":
+                if (!esT) throw new RuntimeException("Solo el trabajador marca llegada.");
+                if (!actual.equals("CITA_HANDSHAKE")) throw new RuntimeException("Debe haber handshake.");
+                msg = "El trabajador llegó al lugar. ¡Confirma el inicio!";
+                destino = cita.getIdCliente();
+                break;
+
+            case "CITA_EN_PROCESO":
+                if (!esC) throw new RuntimeException("Solo el cliente confirma el inicio.");
+                if (!actual.equals("CITA_COMENZANDO")) throw new RuntimeException("El trabajador no ha llegado.");
+                msg = "¡Servicio iniciado y en proceso!";
+                destino = cita.getIdTrabajador();
+                break;
+
+            case "CITA_FINALIZANDO":
+                if (!esT) throw new RuntimeException("Solo el trabajador indica término.");
+                if (!actual.equals("CITA_EN_PROCESO")) throw new RuntimeException("No está en proceso.");
+                msg = "El trabajador terminó. Confirma para finalizar.";
+                destino = cita.getIdCliente();
+                break;
+
+            case "CITA_FINALIZADO":
+                if (!esC) throw new RuntimeException("Solo el cliente finaliza el ciclo.");
+                if (!actual.equals("CITA_FINALIZANDO")) throw new RuntimeException("Aún no termina el trabajo.");
+                msg = "¡Servicio finalizado con éxito!";
+                destino = cita.getIdTrabajador();
+                break;
+
+            case "CITA_CANCELADO":
+                if (!esC) throw new RuntimeException("Solo el cliente puede cancelar.");
+                if (actual.equals("CITA_FINALIZADO")) throw new RuntimeException("Ya está finalizado.");
+                msg = "El cliente canceló la cita.";
+                destino = cita.getIdTrabajador();
+                break;
+
+            default: throw new RuntimeException("Estado inválido.");
         }
 
-        String mensajeNotificacion = "";
-        Integer idDestinatarioNotificacion = null;
-
-        if (nuevoCodigoEstado.equals("ACEP")) {
-            if (!esTrabajador) throw new RuntimeException("Solo el trabajador puede aceptar la cita.");
-            if (!cita.getEstado().getCodigo().equals("PEND")) throw new RuntimeException("Solo se pueden aceptar citas pendientes.");
-            
-            // Si el trabajador acepta, notificamos al CLIENTE
-            mensajeNotificacion = "¡Tu cita ha sido ACEPTADA por el trabajador!";
-            idDestinatarioNotificacion = cita.getIdCliente();
-        } 
-        else if (nuevoCodigoEstado.equals("CANC")) {
-            // Si yo cancelo, notifico a la otra parte
-            mensajeNotificacion = "La cita ha sido CANCELADA.";
-            idDestinatarioNotificacion = esCliente ? cita.getIdTrabajador() : cita.getIdCliente();
-        }
-        else if (nuevoCodigoEstado.equals("FINA")) {
-            if (!cita.getEstado().getCodigo().equals("ACEP")) throw new RuntimeException("El trabajo debe estar aceptado antes de finalizarse.");
-            
-            // Si se finaliza, notificamos al CLIENTE
-            mensajeNotificacion = "El trabajo ha sido marcado como FINALIZADO.";
-            idDestinatarioNotificacion = cita.getIdCliente();
-        }
-
-        Estado nuevoEstado = estadoRepository.findByCodigo(nuevoCodigoEstado)
-                .orElseThrow(() -> new RuntimeException("Estado " + nuevoCodigoEstado + " no válido."));
+        Estado nuevoEstado = estadoRepository.findByCodigo(nuevoCodigo)
+                .orElseThrow(() -> new RuntimeException("Estado inexistente."));
 
         cita.setEstado(nuevoEstado);
-        CitaServicio actualizada = citaRepository.save(cita);
+        CitaServicio guardada = citaRepository.save(cita);
 
-        // ==========================================
-        // ENVIAR NOTIFICACIÓN DE CAMBIO DE ESTADO AL FRONTEND
-        // ==========================================
-        enviarNotificacion(
-            "CAMBIO_ESTADO_" + nuevoCodigoEstado, // Ej: "CAMBIO_ESTADO_ACEP"
-            actualizada.getId().longValue(), 
-            mensajeNotificacion,
-            idDestinatarioNotificacion
-        );
+        // NOTIFICACIÓN WEB SOCKET: Se envía al otro usuario involucrado
+        enviarNotificacion("CAMBIO_ESTADO_" + nuevoCodigo, guardada.getId().longValue(), msg, destino);
 
-        return convertirADto(actualizada);
+        return convertirADto(guardada);
     }
 
-    // ==========================================
-    // UTILS: Traductor a DTO
-    // ==========================================
     private CitaServicioResponseDTO convertirADto(CitaServicio cita) {
-        // ... (el mismo código de conversión a DTO que teníamos antes)
         CitaServicioResponseDTO dto = new CitaServicioResponseDTO();
         dto.setId(cita.getId());
         dto.setComentario(cita.getComentario());
@@ -145,26 +149,15 @@ public class CitaServicioService {
         dto.setTituloOferta(cita.getOfertaServicio().getTitulo());
         dto.setIdCliente(cita.getIdCliente());
         dto.setIdTrabajador(cita.getIdTrabajador());
-        if (cita.getEstado() != null) dto.setEstado(cita.getEstado().getNombre());
+        dto.setEstado(cita.getEstado().getNombre());
         return dto;
     }
 
-    // ==========================================
-    // UTILS: Disparador de WebSockets
-    // ==========================================
-    private void enviarNotificacion(String tipo, Long idServicio, String mensaje, Integer idUsuarioDestino) {
-        NotificacionWebSocketDTO notificacion = new NotificacionWebSocketDTO(
-                tipo,
-                idServicio,
-                mensaje,
-                LocalDateTime.now()
-        );
-
-        // OPCIÓN A (Global): Como lo tenías en tu prueba, se envía a TODOS. 
-        // messagingTemplate.convertAndSend("/topic/servicios", notificacion);
-
-        // OPCIÓN B (Específico y Recomendado): Se envía a un canal único para el usuario afectado.
-        // En tu frontend de Kotlin, el usuario se suscribiría a: "/topic/notificaciones/" + su_id
-        messagingTemplate.convertAndSend("/topic/notificaciones/" + idUsuarioDestino, notificacion);
+    private void enviarNotificacion(String tipo, Long id, String msg, Integer idDestino) {
+        if (idDestino != null) {
+            NotificacionWebSocketDTO noti = new NotificacionWebSocketDTO(tipo, id, msg, LocalDateTime.now());
+            // Se envía al canal privado del usuario: /topic/notificaciones/{id}
+            messagingTemplate.convertAndSend("/topic/notificaciones/" + idDestino, noti);
+        }
     }
 }

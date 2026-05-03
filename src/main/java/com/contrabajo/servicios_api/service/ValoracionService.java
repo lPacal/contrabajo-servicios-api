@@ -40,7 +40,7 @@ public class ValoracionService {
         }
 
         // Ajusta "FINALIZADO" al nombre exacto o ID de tu EstadoCita
-        if (!"FINALIZADO".equalsIgnoreCase(cita.getEstado().getNombre())) {
+        if (!"Finalizado".equalsIgnoreCase(cita.getEstado().getNombre())) {
             throw new RuntimeException("Solo puedes valorar citas que ya hayan sido finalizadas.");
         }
 

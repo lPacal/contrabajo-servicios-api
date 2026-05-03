@@ -1,3 +1,12 @@
+❚❙❘ VERSION 0.6.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Expansión de la Máquina de Estados a 8 niveles (Handshake, Comenzando, En Proceso, Finalizando).
+├─• Lógica de Validación Cruzada: El Cliente debe confirmar hitos clave (Inicio/Fin) para validar presencia del Trabajador.
+├─• Notificaciones WebSocket Bidireccionales: Mensajería automática al canal privado del receptor en cada cambio de estado.
+├─• Seguridad de Flujo: Validación estricta de "Estado Previo" para evitar saltos lógicos en el ciclo de vida de la cita.
+└─• Sincronización de DataSeeder: Actualización de la tabla maestra de estados para soportar el nuevo flujo operativo.
+
+
 ❚❙❘ VERSION 0.5.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Regla de Negocio: Restricción estricta de máximo 3 ofertas por trabajador (contando solo registros no borrados).
@@ -6,8 +15,6 @@
 ├─• Control de Valoraciones: Activación de seguridad a nivel de método (@PreAuthorize) y resolución de conflictos 403.
 └─• Optimización de Service: Filtro manual de Soft Delete en la capa de servicio para mayor control transaccional.
 
-->>> Implementar sistema de chat asíncrono para coordinación de citas.
-->>> Desarrollar panel de analíticas para el trabajador (Promedio de estrellas y servicios completados).
 
 ❚❙❘ VERSION 0.4.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
@@ -17,8 +24,6 @@
 ├─• Regla Anti-Spam: Bloqueo de múltiples reseñas para una misma cita (Relación 1:1).
 └─• Creación de endpoints de consulta pública para leer historiales de reseñas por Trabajador y por Cliente.
 
-->>> Implementar cálculo dinámico (promedio de estrellas) en el perfil del trabajador.
-->>> Desarrollar módulo de Chat/Mensajería vinculado al ID de la cita.
 
 ❚❙❘ VERSION 0.3.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺

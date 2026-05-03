@@ -35,13 +35,17 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void poblarEstados() {
-        if (estadoRepository.count() == 0) {
-            estadoRepository.save(crearEstado("PEND", "Pendiente", "Servicio solicitado."));
-            estadoRepository.save(crearEstado("ACEP", "Aceptado", "Trabajador aceptó."));
-            estadoRepository.save(crearEstado("FINA", "Finalizado", "Trabajo completado."));
-            estadoRepository.save(crearEstado("CANC", "Cancelado", "Servicio anulado."));
-        }
+    if (estadoRepository.count() == 0) {
+        estadoRepository.save(crearEstado("CITA_PENDIENTE", "Pendiente", "El cliente generó la cita y espera revisión del trabajador."));
+        estadoRepository.save(crearEstado("CITA_RECHAZADA", "Rechazada", "Trabajador rechaza propuesta."));
+        estadoRepository.save(crearEstado("CITA_HANDSHAKE", "Handshake", "El trabajador aceptó condiciones iniciales."));
+        estadoRepository.save(crearEstado("CITA_COMENZANDO", "Comenzando", "Trabajador solicita iniciar trabajo (espera confirmación)."));
+        estadoRepository.save(crearEstado("CITA_EN_PROCESO", "En proceso", "Cliente confirma inicio del trabajo."));
+        estadoRepository.save(crearEstado("CITA_FINALIZANDO", "Finalizando", "Trabajador solicita finalizar (espera confirmación)."));
+        estadoRepository.save(crearEstado("CITA_FINALIZADO", "Finalizado", "Cliente confirma finalización del trabajo."));
+        estadoRepository.save(crearEstado("CITA_CANCELADO", "Cancelado", "Cita cancelada por rechazo o cierre anticipado."));
     }
+}
 
     private void poblarCategorias() {
         if (categoriaRepository.count() == 0) {
