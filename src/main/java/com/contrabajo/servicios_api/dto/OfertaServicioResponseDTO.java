@@ -14,6 +14,8 @@ public class OfertaServicioResponseDTO {
     private Boolean disponible;
     private LocalDateTime fechaPublicacion;
     private Integer idTrabajador;
+    private Integer idCategoria;
+    private Integer idTipoPrecio;
     
     // Devolvemos los nombres directamente para hacerle la vida fácil al frontend
     private String categoria; 

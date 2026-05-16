@@ -2,6 +2,15 @@
 
 Este microservicio es el motor principal de negocio de la plataforma **Contrabajo**. Se encarga de la gestión del ciclo de vida de las ofertas de trabajo publicadas por los trabajadores, la solicitud de citas por parte de los clientes, los estados del servicio y el sistema de valoraciones. Además, implementa un sistema de seguridad distribuida validando tokens inter-microservicios.
 
+---
+
+## Estado actual de integración
+
+* El catálogo base de estados ya se repuebla de forma idempotente al iniciar el servicio.
+* El backend expone los catálogos de categorías y tipos de precio para el front.
+* La respuesta de ofertas ya entrega los ids de categoría y tipo de precio para sincronizar edición y detalle.
+* El microservicio sigue alineado con la rama `integracion` y con los snapshots backend de esta iteración.
+
 ## Tecnologías y Arquitectura
 
 El microservicio está construido bajo un enfoque de escalabilidad, seguridad y desacoplamiento:

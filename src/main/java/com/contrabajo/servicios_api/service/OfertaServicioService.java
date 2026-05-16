@@ -145,9 +145,11 @@ public class OfertaServicioService {
         dto.setIdTrabajador(oferta.getIdTrabajador());
         
         if (oferta.getCategoriaServicio() != null) {
+            dto.setIdCategoria(oferta.getCategoriaServicio().getId());
             dto.setCategoria(oferta.getCategoriaServicio().getNombre());
         }
         if (oferta.getTipoPrecio() != null) {
+            dto.setIdTipoPrecio(oferta.getTipoPrecio().getId());
             dto.setTipoPrecio(oferta.getTipoPrecio().getNombre());
         }
         return dto;

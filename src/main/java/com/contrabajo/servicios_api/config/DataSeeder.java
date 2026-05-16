@@ -35,18 +35,16 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void poblarEstados() {
-        if (estadoRepository.count() == 0) {
-            estadoRepository.save(crearEstado("PEND", "Pendiente", "Servicio solicitado."));
-            estadoRepository.save(crearEstado("ACEP", "Aceptado", "Trabajador aceptó."));
-            estadoRepository.save(crearEstado("FINA", "Finalizado", "Trabajo completado."));
-            estadoRepository.save(crearEstado("CANC", "Cancelado", "Servicio anulado."));
-        }
+        asegurarEstado("PEND", "Pendiente", "Servicio solicitado.");
+        asegurarEstado("ACEP", "Aceptado", "Trabajador aceptó.");
+        asegurarEstado("FINA", "Finalizado", "Trabajo completado.");
+        asegurarEstado("CANC", "Cancelado", "Servicio anulado.");
     }
 
     private void poblarCategorias() {
-        if (categoriaRepository.count() == 0) {
-            String[] nombres = {"Electricidad", "Gasfitería", "Limpieza", "Carpintería"};
-            for (String nombre : nombres) {
+        String[] nombres = {"Electricidad", "Gasfitería", "Limpieza", "Carpintería"};
+        for (String nombre : nombres) {
+            if (categoriaRepository.findByNombre(nombre).isEmpty()) {
                 CategoriaServicio cat = new CategoriaServicio();
                 cat.setNombre(nombre);
                 categoriaRepository.save(cat);
@@ -55,9 +53,9 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void poblarTiposPrecio() {
-        if (tipoPrecioRepository.count() == 0) {
-            String[] tipos = {"Precio Fijo", "Por Hora", "A convenir"};
-            for (String tipo : tipos) {
+        String[] tipos = {"Precio Fijo", "Por Hora", "A convenir"};
+        for (String tipo : tipos) {
+            if (tipoPrecioRepository.findByNombre(tipo).isEmpty()) {
                 TipoPrecio tp = new TipoPrecio();
                 tp.setNombre(tipo);
                 tipoPrecioRepository.save(tp);
@@ -65,11 +63,13 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private Estado crearEstado(String codigo, String nombre, String desc) {
-        Estado e = new Estado();
-        e.setCodigo(codigo);
-        e.setNombre(nombre);
-        e.setDescripcion(desc);
-        return e;
+    private void asegurarEstado(String codigo, String nombre, String desc) {
+        Estado estado = estadoRepository.findByCodigo(codigo)
+                .or(() -> estadoRepository.findByNombre(nombre))
+                .orElseGet(Estado::new);
+        estado.setCodigo(codigo);
+        estado.setNombre(nombre);
+        estado.setDescripcion(desc);
+        estadoRepository.save(estado);
     }
 } // <--- ASEGÚRATE DE QUE ESTA LLAVE CIERRE LA CLASE

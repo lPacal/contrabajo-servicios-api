@@ -1,3 +1,15 @@
+❚❙❘ VERSION 0.5.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Endpoints de catálogo para `Categorias` y `Tipos de Precio` disponibles para el front.
+├─• Respuesta de ofertas alineada con el frontend para exponer `idCategoria` e `idTipoPrecio`.
+├─• Seeder idempotente para `Estado`, categorías y tipos de precio, con reparación al arranque de datos parciales.
+├─• Base operativa para que marketplace y edición de publicaciones dependan del backend real.
+└─• Ajustes de integración para continuar el recorte del legado local en servicios.
+
+->>> Consolidar citas y estados de servicio sobre el catálogo real del backend.
+->>> Integrar valoraciones y vista de detalle con datos más completos del lado servidor.
+->>> Conectar los últimos filtros y recorridos de servicios que aún dependan del catálogo local.
+
 ❚❙❘ VERSION 0.4.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Implementación del módulo de Valoraciones (Reseñas 1 a 5 estrellas).
