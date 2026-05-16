@@ -29,6 +29,8 @@ public class SecurityConfig {
                 .requestMatchers("/ws-servicios/**", "/api/prueba-ws/**").permitAll()
                 // Imágenes servidas estáticamente — lectura pública
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/fotos/**").permitAll()
+                // Swagger UI
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 // El resto exige token JWT
                 .anyRequest().authenticated()
             )

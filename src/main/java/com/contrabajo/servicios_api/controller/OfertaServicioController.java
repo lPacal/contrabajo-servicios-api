@@ -36,6 +36,15 @@ public class OfertaServicioController {
         throw new RuntimeException("Acceso denegado: No se encontró un token JWT válido.");
     }
 
+    private String obtenerRolUsuarioAutenticado() {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            return jwtUtil.extractRol(token);
+        }
+        throw new RuntimeException("Acceso denegado: No se encontró un token JWT válido.");
+    }
+
     private String obtenerAuthorizationHeader() {
         return request.getHeader("Authorization");
     }
@@ -122,11 +131,12 @@ public class OfertaServicioController {
     }
 
     @PatchMapping("/{id}/disponibilidad/desactivar")
-    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM', 'MODERADOR', 'ADMINISTRADOR')")
     public ResponseEntity<?> desactivarDisponibilidad(@PathVariable Integer id) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            OfertaServicioResponseDTO ofertaActualizada = ofertaService.desactivarDisponibilidad(id, idUsuario, obtenerAuthorizationHeader());
+            String rol = obtenerRolUsuarioAutenticado();
+            OfertaServicioResponseDTO ofertaActualizada = ofertaService.desactivarDisponibilidad(id, idUsuario, rol, obtenerAuthorizationHeader());
             return ResponseEntity.ok(ofertaActualizada);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -135,11 +145,12 @@ public class OfertaServicioController {
 
     // Eliminar oferta
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM', 'MODERADOR', 'ADMINISTRADOR')")
     public ResponseEntity<?> eliminarOferta(@PathVariable Integer id) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            ofertaService.eliminar(id, idUsuario);
+            String rol = obtenerRolUsuarioAutenticado();
+            ofertaService.eliminar(id, idUsuario, rol);
             return ResponseEntity.ok(Map.of("mensaje", "Oferta eliminada correctamente."));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

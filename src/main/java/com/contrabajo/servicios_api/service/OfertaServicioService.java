@@ -130,23 +130,26 @@ public class OfertaServicioService {
 
     @Transactional
     public OfertaServicioResponseDTO activarDisponibilidad(Integer idOferta, Integer idUsuarioAutenticado, String authorizationHeader) {
-        return cambiarDisponibilidad(idOferta, idUsuarioAutenticado, true, authorizationHeader);
+        return cambiarDisponibilidad(idOferta, idUsuarioAutenticado, "", true, authorizationHeader);
     }
 
     @Transactional
-    public OfertaServicioResponseDTO desactivarDisponibilidad(Integer idOferta, Integer idUsuarioAutenticado, String authorizationHeader) {
-        return cambiarDisponibilidad(idOferta, idUsuarioAutenticado, false, authorizationHeader);
+    public OfertaServicioResponseDTO desactivarDisponibilidad(Integer idOferta, Integer idUsuarioAutenticado, String rolUsuarioAutenticado, String authorizationHeader) {
+        return cambiarDisponibilidad(idOferta, idUsuarioAutenticado, rolUsuarioAutenticado, false, authorizationHeader);
     }
 
     // ==========================================
     // 4. ELIMINAR (Soft Delete)
     // ==========================================
     @Transactional
-    public void eliminar(Integer idOferta, Integer idUsuarioAutenticado) {
+    public void eliminar(Integer idOferta, Integer idUsuarioAutenticado, String rolUsuarioAutenticado) {
         OfertaServicio ofertaExistente = ofertaRepository.findById(idOferta)
                 .orElseThrow(() -> new RuntimeException("Oferta de servicio no encontrada."));
 
-        if (!ofertaExistente.getIdTrabajador().equals(idUsuarioAutenticado)) {
+        boolean esModerador =
+                "MODERADOR".equalsIgnoreCase(rolUsuarioAutenticado) ||
+                "ADMINISTRADOR".equalsIgnoreCase(rolUsuarioAutenticado);
+        if (!esModerador && !ofertaExistente.getIdTrabajador().equals(idUsuarioAutenticado)) {
             throw new RuntimeException("Acceso denegado: No puedes eliminar una oferta que no te pertenece.");
         }
 
@@ -158,13 +161,24 @@ public class OfertaServicioService {
     private OfertaServicioResponseDTO cambiarDisponibilidad(
             Integer idOferta,
             Integer idUsuarioAutenticado,
+            String rolUsuarioAutenticado,
             boolean disponible,
             String authorizationHeader
     ) {
         OfertaServicio ofertaExistente = ofertaRepository.findById(idOferta)
                 .orElseThrow(() -> new RuntimeException("Oferta de servicio no encontrada."));
-        validarPropietario(ofertaExistente, idUsuarioAutenticado);
+        boolean esModerador =
+                "MODERADOR".equalsIgnoreCase(rolUsuarioAutenticado) ||
+                "ADMINISTRADOR".equalsIgnoreCase(rolUsuarioAutenticado);
+        if (!esModerador) {
+            validarPropietario(ofertaExistente, idUsuarioAutenticado);
+        }
         if (Boolean.TRUE.equals(ofertaExistente.getBorrado())) {
+            if (esModerador) {
+                // La oferta ya fue eliminada: estado final compatible con desactivacion de moderacion.
+                // Devolvemos OK sin modificar nada (ya esta efectivamente inactiva).
+                return convertirADto(ofertaExistente, authorizationHeader);
+            }
             throw new RuntimeException("No puedes cambiar la disponibilidad de una oferta eliminada.");
         }
         if (Boolean.TRUE.equals(disponible) && existeOtroServicioActivo(ofertaExistente.getIdTrabajador(), ofertaExistente.getId())) {

@@ -1,3 +1,8 @@
+VERSION 0.10.0-Pre-Alpha
+------------------------
+- Refuerzo de permisos de moderacion sobre ofertas reportadas.
+- Compatibilidad con desactivacion y eliminacion de servicio desde resolucion moderador.
+- Ajustes de respuesta para mantener coherencia con estados visibles en app.
 ❚❙❘ VERSION 0.9.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Nuevo endpoint `GET /api/valoraciones/trabajador/{idTrabajador}`: expone el historial de reseñas de un trabajador a cualquier usuario autenticado (datos públicos).
@@ -135,3 +140,5 @@
 ├─• Capa de Datos: Implementacion de Repositorios (Query Methods) para todas las tablas principales.
 ├─• Arquitectura de Mensajeria: Habilitacion de WebSockets (STOMP + SockJS) para futuras notificaciones.
 └─• Configuracion de application.yml y conexion inicial a SQL Server.
+
+

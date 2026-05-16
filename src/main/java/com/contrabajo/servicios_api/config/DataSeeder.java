@@ -1,5 +1,9 @@
 package com.contrabajo.servicios_api.config;
 
+import com.contrabajo.servicios_api.model.CategoriaServicio;
+import com.contrabajo.servicios_api.model.TipoPrecio;
+import com.contrabajo.servicios_api.repository.CategoriaServicioRepository;
+import com.contrabajo.servicios_api.repository.TipoPrecioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -26,9 +30,14 @@ public class DataSeeder implements CommandLineRunner {
     private static final String ESTADOS_RESOURCE = "seed/codigos-estado.csv";
 
     private final JdbcTemplate jdbcTemplate;
+    private final CategoriaServicioRepository categoriaRepository;
+    private final TipoPrecioRepository tipoPrecioRepository;
 
     @Override
     public void run(String... args) {
+        sembrarCategorias();
+        sembrarTiposPrecio();
+
         List<EstadoSeed> estados = construirCatalogoEstados();
         if (estados.isEmpty()) {
             log.warn("No se encontro catalogo de estados para precargar.");
@@ -92,6 +101,56 @@ public class DataSeeder implements CommandLineRunner {
 
             return null;
         });
+    }
+
+    private void sembrarCategorias() {
+        List<String> categorias = List.of(
+                "Gasfitería",
+                "Electricidad",
+                "Pintura",
+                "Carpintería",
+                "Cerrajería",
+                "Limpieza",
+                "Jardinería",
+                "Mudanzas",
+                "Techumbres y filtraciones",
+                "Reparaciones del hogar",
+                "Instalaciones",
+                "Computación y tecnología",
+                "Clases particulares",
+                "Cuidado de personas",
+                "Cocina y catering",
+                "Fotografía y video",
+                "Diseño y arte",
+                "Otros"
+        );
+
+        for (String nombre : categorias) {
+            if (categoriaRepository.findByNombre(nombre).isEmpty()) {
+                CategoriaServicio categoria = new CategoriaServicio();
+                categoria.setNombre(nombre);
+                categoriaRepository.save(categoria);
+            }
+        }
+        log.info("Categorias de servicio verificadas/cargadas: {}", categorias.size());
+    }
+
+    private void sembrarTiposPrecio() {
+        List<String> tipos = List.of(
+                "Por hora",
+                "Por trabajo",
+                "Por día",
+                "A convenir"
+        );
+
+        for (String nombre : tipos) {
+            if (tipoPrecioRepository.findByNombre(nombre).isEmpty()) {
+                TipoPrecio tipo = new TipoPrecio();
+                tipo.setNombre(nombre);
+                tipoPrecioRepository.save(tipo);
+            }
+        }
+        log.info("Tipos de precio verificados/cargados: {}", tipos.size());
     }
 
     private List<EstadoSeed> construirCatalogoEstados() {
