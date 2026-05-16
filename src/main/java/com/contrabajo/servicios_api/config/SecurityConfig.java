@@ -21,10 +21,12 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                // Permitimos el saludo inicial del WebSocket
-                .requestMatchers("/ws-servicios/**","/api/prueba-ws/**").permitAll() 
-                // El resto de rutas (/api/servicios) exigen token
-                .anyRequest().authenticated() 
+                // WebSocket handshake
+                .requestMatchers("/ws-servicios/**", "/api/prueba-ws/**").permitAll()
+                // Imágenes servidas estáticamente — lectura pública
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/fotos/**").permitAll()
+                // El resto exige token JWT
+                .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

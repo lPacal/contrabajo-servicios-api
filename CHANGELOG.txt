@@ -1,3 +1,20 @@
+❚❙❘ VERSION 0.7.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Módulo de almacenamiento local de fotos de oferta: las imágenes se guardan en disco bajo uploads/fotos/ con nombre UUID único.
+├─• FotoController: POST /api/fotos/{idOferta} (subir), GET /api/fotos/oferta/{idOferta} (listar) y DELETE /api/fotos/{idFoto} (eliminar).
+├─• FotoService: validación de tipo MIME (image/jpeg, image/png, image/webp), tamaño máximo 5 MB, verificación de propietario (IDOR).
+├─• FotoResponseDTO con todos los metadatos: id_foto, enlace, nombre_original, tipo_mime, tamano_bytes, ancho_px, alto_px, fecha_subida.
+├─• Dimensiones de imagen extraídas automáticamente con ImageIO; si falla se almacenan como null sin abortar la subida.
+├─• WebConfig: handler /fotos/** mapeado al directorio de disco para servir imágenes sin pasar por lógica de controlador.
+├─• SecurityConfig ampliado para GET /fotos/** accesible sin autenticación (imágenes públicas).
+├─• Endpoint de subida protegido con @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')").
+└─• Límites multipart configurados en application.yml: max-file-size 5 MB, max-request-size 6 MB.
+
+->>> [Pendiente — nube] Migrar almacenamiento de fotos a Azure Blob Storage; reemplaza Files.copy() por el SDK de Azure en FotoService.
+->>> [Pendiente — nube] Hacer configurable la URL base del enlace en application.yml (app.upload.base-url) en vez de localhost hardcodeado.
+->>> Agregar límite de fotos por oferta (ej. máximo 5).
+
+
 ❚❙❘ VERSION 0.6.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Integración completa del módulo de ofertas con el frontend: disponibilidad, nombre real del trabajador y ubicación de referencia.

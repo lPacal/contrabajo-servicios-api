@@ -18,5 +18,16 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
 jwt:
   secret: EstaEsUnaClaveSecretaMuyLargaParaQueNadieLaAdivine123456789
+
+app:
+  upload:
+    fotos-dir: ${user.dir}/uploads/fotos
+    max-tamano-bytes: 5242880
+    tipos-permitidos: image/jpeg,image/png,image/webp
