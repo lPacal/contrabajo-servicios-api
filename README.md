@@ -17,7 +17,7 @@ El microservicio está construido bajo un enfoque de escalabilidad, seguridad y 
 * **Lenguaje:** Java 21
 * **Framework:** Spring Boot 3.4.x
 * **Seguridad:** Spring Security con validación de JWT y RBAC (Role-Based Access Control)
-* **Gestión de Configuración:** Spring Cloud Config (Client) - Endpoint: `http://localhost:8888`
+* **Gestión de Configuración:** Configuración local por `application.yml`
 * **Persistencia:** Spring Data JPA
 * **Base de Datos:** SQL Server
 * **Productividad:** Lombok
@@ -34,6 +34,7 @@ El código sigue una estructura de capas estándar para facilitar el mantenimien
 
 ## Configuración del Entorno
 
-Este servicio utiliza un archivo `application.yml` configurado con la dependencia del servidor de configuración. Para iniciar la aplicación localmente, es **obligatorio** tener el servidor de configuración (`config_server`) activo. 
+Este servicio ya no depende del `config_server`. Al iniciar, toma directamente la base local `MS_Servicios` definida en `application.yml`.
+La conexión local usa la cuenta `admincontrabajo` con la clave compartida del proyecto.
 
 Además, para que las funcionalidades de seguridad y creación de ofertas operen correctamente, este microservicio requiere comunicación en tiempo real con `MS_Usuarios` (para la validación del estado del token en base de datos).

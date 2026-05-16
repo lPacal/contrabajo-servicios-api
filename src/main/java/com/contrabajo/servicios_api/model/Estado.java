@@ -15,7 +15,7 @@ public class Estado {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_estado")
-    private Short id; // En SQL es SMALLINT, pero en Java Integer es más cómodo y compatible
+    private Short id;
 
     @Column(nullable = false, unique = true, length = 30)
     private String codigo;

@@ -1,0 +1,12 @@
+id_estado;codigo;contexto;nombre;descripcion;uso_principal
+101;USR_ACTIVO;Usuarios;Usuario activo;Usuario habilitado para operar en la plataforma.;Login, sesion y uso normal
+102;USR_SUSPENDIDO;Usuarios;Usuario suspendido;Usuario suspendido temporalmente por reglas de plataforma.;Moderacion y bloqueos temporales
+103;USR_BANEADO;Usuarios;Usuario baneado;Usuario bloqueado por incumplimiento grave.;Moderacion permanente
+401;CITA_PENDIENTE;Citas y estados operativos;Pendiente;El cliente genero la cita y espera revision del trabajador.;Inicio del acuerdo
+402;CITA_RECHAZADA;Citas y operativos;Rechazada;Trabajador rechaza propuesta y la cita sigue activa para renegociacion/reenvio.;Negociacion de cita
+403;CITA_HANDSHAKE;Citas y estados operativos;Handshake;El trabajador acepto condiciones iniciales de la cita.;Acuerdo bilateral inicial
+404;CITA_COMENZANDO;Citas y estados operativos;Comenzando;Trabajador solicita iniciar trabajo y espera confirmacion cliente.;Handshake de inicio
+405;CITA_EN_PROCESO;Citas y estados operativos;En proceso;Cliente confirma inicio del trabajo.;Ejecucion del servicio
+406;CITA_FINALIZANDO;Citas y estados operativos;Finalizando;Trabajador solicita finalizar y espera confirmacion cliente.;Handshake de cierre
+407;CITA_FINALIZADO;Citas y estados operativos;Finalizado;Cliente confirma finalizacion del trabajo.;Cierre operativo del servicio
+408;CITA_CANCELADO;Citas y estados operativos;Cancelado;Cita cancelada por rechazo o cierre anticipado.;Cancelaciones

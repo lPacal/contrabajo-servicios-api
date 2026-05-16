@@ -45,13 +45,26 @@ public class CitaServicioController {
         }
     }
 
-    // 2. ACEPTAR (De "Pendiente" a "Aceptado")
+    // 2. ACEPTAR (De "Pendiente" a "Handshake")
     @PatchMapping("/{id}/aceptar")
     @PreAuthorize("hasRole('TRABAJADOR')") // Solo el trabajador puede decir "Sí, voy"
     public ResponseEntity<?> aceptarCita(@PathVariable Integer id) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "ACEP", idUsuario);
+            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CITA_HANDSHAKE", idUsuario);
+            return ResponseEntity.ok(cita);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 2.1 RECHAZAR (El trabajador no toma la cita)
+    @PatchMapping("/{id}/rechazar")
+    @PreAuthorize("hasRole('TRABAJADOR')")
+    public ResponseEntity<?> rechazarCita(@PathVariable Integer id) {
+        try {
+            Integer idUsuario = obtenerIdUsuarioAutenticado();
+            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CITA_RECHAZADA", idUsuario);
             return ResponseEntity.ok(cita);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -63,7 +76,7 @@ public class CitaServicioController {
     public ResponseEntity<?> cancelarCita(@PathVariable Integer id) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CANC", idUsuario);
+            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CITA_CANCELADO", idUsuario);
             return ResponseEntity.ok(cita);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -76,7 +89,7 @@ public class CitaServicioController {
     public ResponseEntity<?> finalizarCita(@PathVariable Integer id) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "FINA", idUsuario);
+            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CITA_FINALIZADO", idUsuario);
             return ResponseEntity.ok(cita);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

@@ -36,13 +36,17 @@ public class OfertaServicioController {
         throw new RuntimeException("Acceso denegado: No se encontró un token JWT válido.");
     }
 
+    private String obtenerAuthorizationHeader() {
+        return request.getHeader("Authorization");
+    }
+
     // Crear oferta (Solo Trabajadores)
     @PostMapping
-    @PreAuthorize("hasRole('TRABAJADOR')")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
     public ResponseEntity<?> crearOferta(@RequestBody OfertaServicioCreateDTO dto) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            OfertaServicioResponseDTO nuevaOferta = ofertaService.crear(dto, idUsuario);
+            OfertaServicioResponseDTO nuevaOferta = ofertaService.crear(dto, idUsuario, obtenerAuthorizationHeader());
             return ResponseEntity.status(201).body(nuevaOferta);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -52,34 +56,77 @@ public class OfertaServicioController {
     // Listar todas
     @GetMapping
     public ResponseEntity<List<OfertaServicioResponseDTO>> listarTodas() {
-        return ResponseEntity.ok(ofertaService.listarTodas());
+        return ResponseEntity.ok(ofertaService.listarTodas(obtenerAuthorizationHeader()));
     }
 
     // Buscar por ID
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPorId(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(ofertaService.buscarPorId(id));
+            return ResponseEntity.ok(ofertaService.buscarPorId(id, obtenerAuthorizationHeader()));
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/disponibilidad")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
+    public ResponseEntity<Boolean> obtenerDisponibilidad(@PathVariable Integer id) {
+        try {
+            Integer idUsuario = obtenerIdUsuarioAutenticado();
+            return ResponseEntity.ok(ofertaService.obtenerDisponibilidad(id, idUsuario));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(false);
         }
     }
 
     // Listar por trabajador
     @GetMapping("/trabajador/{idTrabajador}")
     public ResponseEntity<List<OfertaServicioResponseDTO>> listarPorTrabajador(@PathVariable Integer idTrabajador) {
-        return ResponseEntity.ok(ofertaService.listarPorTrabajador(idTrabajador));
+        return ResponseEntity.ok(ofertaService.listarPorTrabajador(idTrabajador, obtenerAuthorizationHeader()));
     }
 
     // Actualizar oferta
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('TRABAJADOR')")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
     public ResponseEntity<?> actualizarOferta(
             @PathVariable Integer id, 
             @RequestBody OfertaServicioUpdateDTO dto) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            OfertaServicioResponseDTO ofertaActualizada = ofertaService.actualizar(id, dto, idUsuario);
+            OfertaServicioResponseDTO ofertaActualizada = ofertaService.actualizar(id, dto, idUsuario, obtenerAuthorizationHeader());
+            return ResponseEntity.ok(ofertaActualizada);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
+    public ResponseEntity<?> actualizarOfertaPut(
+            @PathVariable Integer id,
+            @RequestBody OfertaServicioUpdateDTO dto) {
+        return actualizarOferta(id, dto);
+    }
+
+    @PatchMapping("/{id}/disponibilidad/activar")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
+    public ResponseEntity<?> activarDisponibilidad(@PathVariable Integer id) {
+        try {
+            Integer idUsuario = obtenerIdUsuarioAutenticado();
+            OfertaServicioResponseDTO ofertaActualizada = ofertaService.activarDisponibilidad(id, idUsuario, obtenerAuthorizationHeader());
+            return ResponseEntity.ok(ofertaActualizada);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{id}/disponibilidad/desactivar")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
+    public ResponseEntity<?> desactivarDisponibilidad(@PathVariable Integer id) {
+        try {
+            Integer idUsuario = obtenerIdUsuarioAutenticado();
+            OfertaServicioResponseDTO ofertaActualizada = ofertaService.desactivarDisponibilidad(id, idUsuario, obtenerAuthorizationHeader());
             return ResponseEntity.ok(ofertaActualizada);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -88,7 +135,7 @@ public class OfertaServicioController {
 
     // Eliminar oferta
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('TRABAJADOR')")
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'PREMIUM')")
     public ResponseEntity<?> eliminarOferta(@PathVariable Integer id) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();

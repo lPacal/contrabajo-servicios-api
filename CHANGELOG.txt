@@ -1,3 +1,21 @@
+❚❙❘ VERSION 0.6.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Integración completa del módulo de ofertas con el frontend: disponibilidad, nombre real del trabajador y ubicación de referencia.
+├─• Endpoints dedicados para activar y desactivar disponibilidad por PATCH independiente, sin requerir edición completa.
+├─• Permisos ampliados para TRABAJADOR y PREMIUM en edición y cambio de disponibilidad, eliminando bloqueos 403.
+├─• Edición de oferta habilitada también por PUT para reducir fallos de contrato con el frontend.
+├─• Ofertas nuevas parten con disponible = false; el trabajador las activa manualmente.
+├─• OfertaServicioResponseDTO enriquecido con nombreTrabajador, usernameTrabajador, ubicacionReferencia, latitud, longitud y rangoDisponibilidadM.
+├─• UsuarioUbicacionDTO corregido con @JsonProperty para deserializar rango_disponibilidad_m y apellidos desde usuarios_api.
+├─• completarUbicacionTrabajador separado para poblar nombre y apellidos aunque la dirección esté ausente.
+├─• Ubicación pública de oferta reducida a comuna y región; calle y número nunca se exponen en la respuesta.
+├─• Catálogo de estados expuesto vía EstadoController y EstadoCatalogoService para consumo del frontend.
+└─• Seed de datos refactorizado con archivos externos en resources/seed/ e inicialización idempotente ampliada.
+
+->>> Integrar filtro geográfico server-side para reducir carga de filtrado en el frontend.
+->>> Exponer endpoint de búsqueda de ofertas por proximidad con parámetros de lat/lon y radio.
+
+
 ❚❙❘ VERSION 0.5.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Endpoints de catálogo para `Categorias` y `Tipos de Precio` disponibles para el front.

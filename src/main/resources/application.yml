@@ -1,6 +1,13 @@
 spring:
   application:
     name: servicios_api
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+  datasource:
+    url: jdbc:sqlserver://localhost:58166;databaseName=MS_Servicios;encrypt=true;trustServerCertificate=true;loginTimeout=30;
+    username: admincontrabajo
+    password: Contrabajo123!
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jackson:
     serialization:
       fail-on-empty-beans: false
@@ -11,10 +18,5 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
-  config:
-    import: "optional:configserver:http://localhost:8888"
-  cloud:
-    config:
-      fail-fast: true
 jwt:
   secret: EstaEsUnaClaveSecretaMuyLargaParaQueNadieLaAdivine123456789

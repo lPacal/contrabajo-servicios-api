@@ -39,8 +39,7 @@ public class ValoracionService {
             throw new RuntimeException("Acceso denegado: No tienes permisos para valorar esta cita.");
         }
 
-        // Ajusta "FINALIZADO" al nombre exacto o ID de tu EstadoCita
-        if (!"FINALIZADO".equalsIgnoreCase(cita.getEstado().getNombre())) {
+        if (!"CITA_FINALIZADO".equalsIgnoreCase(cita.getEstado().getCodigo())) {
             throw new RuntimeException("Solo puedes valorar citas que ya hayan sido finalizadas.");
         }
 

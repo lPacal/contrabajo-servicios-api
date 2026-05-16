@@ -20,6 +20,13 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class CitaServicioService {
 
+    private static final String ESTADO_CITA_PENDIENTE = "CITA_PENDIENTE";
+    private static final String ESTADO_CITA_HANDSHAKE = "CITA_HANDSHAKE";
+    private static final String ESTADO_CITA_CANCELADO = "CITA_CANCELADO";
+    private static final String ESTADO_CITA_RECHAZADA = "CITA_RECHAZADA";
+    private static final String ESTADO_CITA_FINALIZANDO = "CITA_FINALIZANDO";
+    private static final String ESTADO_CITA_FINALIZADO = "CITA_FINALIZADO";
+
     private final CitaServicioRepository citaRepository;
     private final OfertaServicioRepository ofertaRepository;
     private final EstadoRepository estadoRepository;
@@ -42,7 +49,7 @@ public class CitaServicioService {
             throw new RuntimeException("No puedes solicitar un servicio publicado por ti mismo.");
         }
 
-        Estado estadoPendiente = estadoRepository.findByCodigo("PEND")
+        Estado estadoPendiente = estadoRepository.findByCodigo(ESTADO_CITA_PENDIENTE)
                 .orElseThrow(() -> new RuntimeException("Error interno: Estado Pendiente no configurado."));
 
         CitaServicio nuevaCita = new CitaServicio();
@@ -88,21 +95,30 @@ public class CitaServicioService {
         String mensajeNotificacion = "";
         Integer idDestinatarioNotificacion = null;
 
-        if (nuevoCodigoEstado.equals("ACEP")) {
+        if (ESTADO_CITA_HANDSHAKE.equals(nuevoCodigoEstado)) {
             if (!esTrabajador) throw new RuntimeException("Solo el trabajador puede aceptar la cita.");
-            if (!cita.getEstado().getCodigo().equals("PEND")) throw new RuntimeException("Solo se pueden aceptar citas pendientes.");
+            if (!ESTADO_CITA_PENDIENTE.equals(cita.getEstado().getCodigo())) throw new RuntimeException("Solo se pueden aceptar citas pendientes.");
             
             // Si el trabajador acepta, notificamos al CLIENTE
             mensajeNotificacion = "¡Tu cita ha sido ACEPTADA por el trabajador!";
             idDestinatarioNotificacion = cita.getIdCliente();
         } 
-        else if (nuevoCodigoEstado.equals("CANC")) {
+        else if (ESTADO_CITA_RECHAZADA.equals(nuevoCodigoEstado)) {
+            if (!esTrabajador) throw new RuntimeException("Solo el trabajador puede rechazar la cita.");
+            if (!ESTADO_CITA_PENDIENTE.equals(cita.getEstado().getCodigo())) throw new RuntimeException("Solo se pueden rechazar citas pendientes.");
+
+            mensajeNotificacion = "La cita ha sido RECHAZADA por el trabajador.";
+            idDestinatarioNotificacion = cita.getIdCliente();
+        }
+        else if (ESTADO_CITA_CANCELADO.equals(nuevoCodigoEstado)) {
             // Si yo cancelo, notifico a la otra parte
             mensajeNotificacion = "La cita ha sido CANCELADA.";
             idDestinatarioNotificacion = esCliente ? cita.getIdTrabajador() : cita.getIdCliente();
         }
-        else if (nuevoCodigoEstado.equals("FINA")) {
-            if (!cita.getEstado().getCodigo().equals("ACEP")) throw new RuntimeException("El trabajo debe estar aceptado antes de finalizarse.");
+        else if (ESTADO_CITA_FINALIZADO.equals(nuevoCodigoEstado)) {
+            if (!ESTADO_CITA_HANDSHAKE.equals(cita.getEstado().getCodigo()) && !ESTADO_CITA_FINALIZANDO.equals(cita.getEstado().getCodigo())) {
+                throw new RuntimeException("El trabajo debe estar en handshake o finalizando antes de marcarse como finalizado.");
+            }
             
             // Si se finaliza, notificamos al CLIENTE
             mensajeNotificacion = "El trabajo ha sido marcado como FINALIZADO.";
