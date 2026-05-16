@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,75 +23,146 @@ public class CitaServicioController {
     private final JwtUtil jwtUtil;
     private final HttpServletRequest request;
 
-    // Método interno para extraer el ID del Token (igual que en Ofertas)
     private Integer obtenerIdUsuarioAutenticado() {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            return jwtUtil.extractId(token);
+            return jwtUtil.extractId(authHeader.substring(7));
         }
-        throw new RuntimeException("Acceso denegado: Token inválido.");
+        throw new RuntimeException("Acceso denegado: Token invalido.");
     }
 
-    // 1. SOLICITAR (Solo Clientes)
+    // ──────────────────────────────────────────────────────────────────────────
+    // 1. SOLICITAR — cliente crea la cita en PENDIENTE
+    // ──────────────────────────────────────────────────────────────────────────
     @PostMapping("/solicitar")
-    @PreAuthorize("hasRole('CLIENTE')")
-    public ResponseEntity<?> solicitarServicio(@RequestBody SolicitarCitaDTO dto) {
+    @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    public ResponseEntity<?> solicitar(@RequestBody SolicitarCitaDTO dto) {
         try {
-            Integer idCliente = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO nuevaCita = citaService.solicitarServicio(dto, idCliente);
-            return ResponseEntity.status(201).body(nuevaCita);
+            return ResponseEntity.status(201)
+                    .body(citaService.solicitarServicio(dto, obtenerIdUsuarioAutenticado()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    // 2. ACEPTAR (De "Pendiente" a "Handshake")
+    // ──────────────────────────────────────────────────────────────────────────
+    // 2. ACEPTAR — PENDIENTE → HANDSHAKE (trabajador)
+    // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/aceptar")
-    @PreAuthorize("hasRole('TRABAJADOR')") // Solo el trabajador puede decir "Sí, voy"
-    public ResponseEntity<?> aceptarCita(@PathVariable Integer id) {
+    @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')")
+    public ResponseEntity<?> aceptar(@PathVariable Integer id) {
         try {
-            Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CITA_HANDSHAKE", idUsuario);
-            return ResponseEntity.ok(cita);
+            return ResponseEntity.ok(citaService.aceptarCita(id, obtenerIdUsuarioAutenticado()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    // 2.1 RECHAZAR (El trabajador no toma la cita)
+    // ──────────────────────────────────────────────────────────────────────────
+    // 3. RECHAZAR — PENDIENTE → RECHAZADA (trabajador)
+    // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/rechazar")
-    @PreAuthorize("hasRole('TRABAJADOR')")
-    public ResponseEntity<?> rechazarCita(@PathVariable Integer id) {
+    @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')")
+    public ResponseEntity<?> rechazar(@PathVariable Integer id) {
         try {
-            Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CITA_RECHAZADA", idUsuario);
-            return ResponseEntity.ok(cita);
+            return ResponseEntity.ok(citaService.rechazarCita(id, obtenerIdUsuarioAutenticado()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    // 3. CANCELAR (Cualquiera de los dos puede arrepentirse)
-    @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<?> cancelarCita(@PathVariable Integer id) {
+    // ──────────────────────────────────────────────────────────────────────────
+    // 4. REENVIAR PROPUESTA — RECHAZADA → PENDIENTE (cliente)
+    // ──────────────────────────────────────────────────────────────────────────
+    @PatchMapping("/{id}/reenviar")
+    @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    public ResponseEntity<?> reenviar(@PathVariable Integer id) {
         try {
-            Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CITA_CANCELADO", idUsuario);
-            return ResponseEntity.ok(cita);
+            return ResponseEntity.ok(citaService.reenviarPropuesta(id, obtenerIdUsuarioAutenticado()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    // 4. FINALIZAR (El trabajo se completó)
+    // ──────────────────────────────────────────────────────────────────────────
+    // 5. COMENZAR — HANDSHAKE → COMENZANDO (trabajador solicita inicio)
+    // ──────────────────────────────────────────────────────────────────────────
+    @PatchMapping("/{id}/comenzar")
+    @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')")
+    public ResponseEntity<?> comenzar(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(citaService.comenzarTrabajo(id, obtenerIdUsuarioAutenticado()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 6. CONFIRMAR INICIO — COMENZANDO → EN_PROCESO (cliente confirma)
+    // ──────────────────────────────────────────────────────────────────────────
+    @PatchMapping("/{id}/confirmar-inicio")
+    @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    public ResponseEntity<?> confirmarInicio(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(citaService.confirmarInicio(id, obtenerIdUsuarioAutenticado()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 7. FINALIZAR — EN_PROCESO → FINALIZANDO (trabajador solicita cierre)
+    // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/finalizar")
-    @PreAuthorize("hasRole('TRABAJADOR')")
-    public ResponseEntity<?> finalizarCita(@PathVariable Integer id) {
+    @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')")
+    public ResponseEntity<?> finalizar(@PathVariable Integer id) {
         try {
-            Integer idUsuario = obtenerIdUsuarioAutenticado();
-            CitaServicioResponseDTO cita = citaService.cambiarEstadoCita(id, "CITA_FINALIZADO", idUsuario);
-            return ResponseEntity.ok(cita);
+            return ResponseEntity.ok(citaService.finalizarTrabajo(id, obtenerIdUsuarioAutenticado()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 8. CONFIRMAR FINALIZACION — FINALIZANDO → FINALIZADO (cliente confirma)
+    // ──────────────────────────────────────────────────────────────────────────
+    @PatchMapping("/{id}/confirmar-finalizacion")
+    @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    public ResponseEntity<?> confirmarFinalizacion(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(citaService.confirmarFinalizacion(id, obtenerIdUsuarioAutenticado()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 9. CANCELAR — cualquier estado activo → CANCELADO (cualquiera)
+    // ──────────────────────────────────────────────────────────────────────────
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<?> cancelar(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(citaService.cancelarCita(id, obtenerIdUsuarioAutenticado()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 10. LISTAR MIS CITAS
+    // ──────────────────────────────────────────────────────────────────────────
+    @GetMapping("/mis-citas")
+    public ResponseEntity<List<CitaServicioResponseDTO>> misCitas() {
+        return ResponseEntity.ok(citaService.listarMisCitas(obtenerIdUsuarioAutenticado()));
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 11. DETALLE DE UNA CITA
+    // ──────────────────────────────────────────────────────────────────────────
+    @GetMapping("/{id}")
+    public ResponseEntity<?> detalle(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(citaService.obtenerCita(id, obtenerIdUsuarioAutenticado()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

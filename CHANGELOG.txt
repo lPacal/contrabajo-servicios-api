@@ -1,3 +1,22 @@
+❚❙❘ VERSION 0.8.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• `CitaServicioService` refactorizado con métodos dedicados por transición: `aceptarCita`, `rechazarCita`, `reenviarPropuesta`, `comenzarTrabajo`, `confirmarInicio`, `finalizarTrabajo`, `confirmarCierre`, `cancelarCita`.
+├─• Helpers internos reutilizables: `obtenerVerificada` (Anti-IDOR), `validarTrabajador`, `validarCliente`, `validarEstado`, `transicionar`, `buscarEstado` y `notificar`.
+├─• Nuevos estados en el catálogo: `CITA_COMENZANDO` (trabajador solicita inicio de trabajo) y `CITA_EN_PROCESO` (cliente confirma inicio), completando la máquina de 9 estados (401–409).
+├─• Constantes de estado renombradas y alineadas con los códigos numéricos del frontend (`401..409`) para eliminar divergencias de contrato.
+├─• Nuevos endpoints: `PATCH /{id}/comenzar`, `PATCH /{id}/confirmar-inicio`, `PATCH /{id}/reenviar`, `PATCH /{id}/confirmar-cierre`, `PATCH /{id}/cancelar` y `GET /{id}`.
+├─• `CitaServicioResponseDTO` enriquecido con `idEstado` (código numérico 401-409), `codigoEstado` (clave string), `fechaInicioTrabajo` y `fechaFinTrabajo`.
+├─• `SolicitarCitaDTO` ampliado con `idChatOferta` para vincular la cita al chat correspondiente al crearla.
+├─• Rol `PREMIUM` añadido a todos los endpoints que solo aceptaban `TRABAJADOR` o `CLIENTE`, igualando permisos operativos.
+├─• Disparador de notificaciones WebSocket refactorizado al helper `notificar()` reutilizable por todas las transiciones.
+├─• [BD] Tabla `estado`: 2 nuevas filas en el catálogo de estados de cita → `CITA_COMENZANDO (id 404)` y `CITA_EN_PROCESO (id 405)`; IDs de los estados existentes reordenados para mantener coherencia con el esquema 401-409.
+└─• [BD] `cita_servicio`: columnas `fecha_inicio_trabajo` y `fecha_fin_trabajo` ahora se exponen en el DTO de respuesta y se populan en las transiciones de inicio y cierre.
+
+->>> Agregar endpoint GET /mis-citas para listar todas las citas del usuario autenticado.
+->>> Publicar contrato OpenAPI actualizado con los 9 estados y los nuevos endpoints de transición.
+->>> Conectar idChatOferta al endpoint de vinculación de comunicaciones_api en el flujo de creación de cita.
+
+
 ❚❙❘ VERSION 0.7.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ├─• Módulo de almacenamiento local de fotos de oferta: las imágenes se guardan en disco bajo uploads/fotos/ con nombre UUID único.
