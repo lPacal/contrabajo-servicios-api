@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public class ValoracionResponseDTO {
     private Long id;
     private Integer idCita;
+    private Integer idOfertaServicio;
     private Integer idCliente;
     private Integer idTrabajador;
     private Short voto;

@@ -40,5 +40,37 @@ public class ValoracionController {
         }
     }
 
-    // ... (Tus otros endpoints GET se mantienen igual) ...
+    @GetMapping("/trabajador/{idTrabajador}")
+    public ResponseEntity<?> obtenerPorTrabajador(@PathVariable Integer idTrabajador, HttpServletRequest request) {
+        try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                throw new RuntimeException("Token de autorización no encontrado.");
+            }
+            String token = authHeader.substring(7);
+            // Solo exigimos token valido; las valoraciones del trabajador son publicas para clientes.
+            jwtUtil.extractClaim(token, claims -> claims.get("id", Integer.class));
+            return ResponseEntity.ok(valoracionService.obtenerPorTrabajador(idTrabajador));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/cliente/{idCliente}")
+    public ResponseEntity<?> obtenerPorCliente(@PathVariable Integer idCliente, HttpServletRequest request) {
+        try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                throw new RuntimeException("Token de autorización no encontrado.");
+            }
+            String token = authHeader.substring(7);
+            Integer idUsuarioAutenticado = jwtUtil.extractClaim(token, claims -> claims.get("id", Integer.class));
+            if (!idCliente.equals(idUsuarioAutenticado)) {
+                throw new RuntimeException("No tienes permiso para consultar estas valoraciones.");
+            }
+            return ResponseEntity.ok(valoracionService.obtenerPorCliente(idCliente));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

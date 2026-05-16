@@ -82,6 +82,7 @@ public class ValoracionService {
         ValoracionResponseDTO dto = new ValoracionResponseDTO();
         dto.setId(valoracion.getId());
         dto.setIdCita(valoracion.getCita().getId()); // Asumiendo que getId() en CitaServicio devuelve Integer
+        dto.setIdOfertaServicio(valoracion.getCita().getOfertaServicio().getId());
         dto.setIdCliente(valoracion.getIdCliente());
         dto.setIdTrabajador(valoracion.getIdTrabajador());
         dto.setVoto(valoracion.getVoto());
