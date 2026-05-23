@@ -6,6 +6,10 @@ spring:
     name: servicios_api
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+  cloud:
+    config:
+      enabled: true
+      fail-fast: true
   datasource:
     url: jdbc:sqlserver://localhost:58166;databaseName=MS_Servicios;encrypt=true;trustServerCertificate=true;loginTimeout=30;
     username: admincontrabajo
@@ -34,3 +38,8 @@ app:
     fotos-dir: ${user.dir}/uploads/fotos
     max-tamano-bytes: 5242880
     tipos-permitidos: image/jpeg,image/png,image/webp
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: alpha

@@ -1,9 +1,19 @@
 package com.contrabajo.servicios_api.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Estado catalogado para el flujo de citas de servicio.")
 public class EstadoDTO {
+    @Schema(description = "ID numerico del estado.", example = "401")
     private Integer id;
+
+    @Schema(description = "Codigo tecnico del estado.", example = "CITA_PENDIENTE")
     private String codigo;
+
+    @Schema(description = "Nombre visible del estado.", example = "Pendiente")
     private String nombre;
+
+    @Schema(description = "Descripcion funcional del estado.", example = "La cita fue solicitada y espera respuesta del trabajador.")
     private String descripcion;
 
     public EstadoDTO() {

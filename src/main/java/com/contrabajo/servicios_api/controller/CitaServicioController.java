@@ -5,6 +5,13 @@ import com.contrabajo.servicios_api.dto.SolicitarCitaDTO;
 import com.contrabajo.servicios_api.service.CitaServicioService;
 import com.contrabajo.servicios_api.utils.JwtUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@Tag(name = "4. Citas de servicio", description = "Endpoints para solicitar citas y avanzar el flujo de estados cliente-trabajador")
 @RequestMapping("/api/citas")
 @RequiredArgsConstructor
 public class CitaServicioController {
@@ -36,6 +44,19 @@ public class CitaServicioController {
     // ──────────────────────────────────────────────────────────────────────────
     @PostMapping("/solicitar")
     @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    @Operation(
+            summary = "Solicitar cita",
+            description = "**Requiere rol CLIENTE o PREMIUM (BearerAuth)**<br><br>" +
+                    "Crea una cita en estado pendiente para una oferta de servicio. El cliente solicitante se obtiene desde el token."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Cita solicitada correctamente.",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Oferta invalida, token ausente o regla de negocio incumplida.",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado: Token invalido.\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado para solicitar citas.", content = @Content)
+    })
     public ResponseEntity<?> solicitar(@RequestBody SolicitarCitaDTO dto) {
         try {
             return ResponseEntity.status(201)
@@ -50,6 +71,13 @@ public class CitaServicioController {
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/aceptar")
     @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')")
+    @Operation(summary = "Aceptar cita", description = "**Requiere rol TRABAJADOR o PREMIUM (BearerAuth)**<br><br>Avanza una cita pendiente a estado de handshake.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cita aceptada correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente, estado invalido o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado para aceptar citas.", content = @Content)
+    })
     public ResponseEntity<?> aceptar(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.aceptarCita(id, obtenerIdUsuarioAutenticado()));
@@ -63,6 +91,13 @@ public class CitaServicioController {
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/rechazar")
     @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')")
+    @Operation(summary = "Rechazar cita", description = "**Requiere rol TRABAJADOR o PREMIUM (BearerAuth)**<br><br>Rechaza una cita pendiente y la deja disponible para reenvio de propuesta.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cita rechazada correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente, estado invalido o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado para rechazar citas.", content = @Content)
+    })
     public ResponseEntity<?> rechazar(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.rechazarCita(id, obtenerIdUsuarioAutenticado()));
@@ -76,6 +111,13 @@ public class CitaServicioController {
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/reenviar")
     @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    @Operation(summary = "Reenviar propuesta de cita", description = "**Requiere rol CLIENTE o PREMIUM (BearerAuth)**<br><br>Devuelve una cita rechazada al estado pendiente para que el trabajador pueda revisarla nuevamente.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Propuesta reenviada correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente, estado invalido o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado para reenviar citas.", content = @Content)
+    })
     public ResponseEntity<?> reenviar(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.reenviarPropuesta(id, obtenerIdUsuarioAutenticado()));
@@ -89,6 +131,13 @@ public class CitaServicioController {
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/comenzar")
     @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')")
+    @Operation(summary = "Solicitar inicio de trabajo", description = "**Requiere rol TRABAJADOR o PREMIUM (BearerAuth)**<br><br>El trabajador solicita comenzar el trabajo y la cita pasa a espera de confirmacion del cliente.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Solicitud de inicio registrada.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente, estado invalido o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado para iniciar trabajo.", content = @Content)
+    })
     public ResponseEntity<?> comenzar(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.comenzarTrabajo(id, obtenerIdUsuarioAutenticado()));
@@ -102,6 +151,13 @@ public class CitaServicioController {
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/confirmar-inicio")
     @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    @Operation(summary = "Confirmar inicio de trabajo", description = "**Requiere rol CLIENTE o PREMIUM (BearerAuth)**<br><br>El cliente confirma que el trabajo comenzo y la cita pasa a estado en proceso.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Inicio confirmado correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente, estado invalido o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado para confirmar inicio.", content = @Content)
+    })
     public ResponseEntity<?> confirmarInicio(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.confirmarInicio(id, obtenerIdUsuarioAutenticado()));
@@ -115,6 +171,13 @@ public class CitaServicioController {
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/finalizar")
     @PreAuthorize("hasAnyRole('TRABAJADOR','PREMIUM')")
+    @Operation(summary = "Solicitar finalizacion de trabajo", description = "**Requiere rol TRABAJADOR o PREMIUM (BearerAuth)**<br><br>El trabajador solicita finalizar el trabajo y la cita pasa a espera de confirmacion del cliente.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Solicitud de finalizacion registrada.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente, estado invalido o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado para finalizar trabajo.", content = @Content)
+    })
     public ResponseEntity<?> finalizar(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.finalizarTrabajo(id, obtenerIdUsuarioAutenticado()));
@@ -128,6 +191,13 @@ public class CitaServicioController {
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/confirmar-finalizacion")
     @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    @Operation(summary = "Confirmar finalizacion de trabajo", description = "**Requiere rol CLIENTE o PREMIUM (BearerAuth)**<br><br>El cliente confirma que el trabajo finalizo y la cita pasa a estado finalizado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Finalizacion confirmada correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente, estado invalido o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado para confirmar finalizacion.", content = @Content)
+    })
     public ResponseEntity<?> confirmarFinalizacion(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.confirmarFinalizacion(id, obtenerIdUsuarioAutenticado()));
@@ -140,6 +210,13 @@ public class CitaServicioController {
     // 9. CANCELAR — cualquier estado activo → CANCELADO (cualquiera)
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/cancelar")
+    @Operation(summary = "Cancelar cita", description = "**Requiere Token JWT valido (BearerAuth)**<br><br>Cancela una cita activa. Puede ejecutarlo un participante autorizado de la cita.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cita cancelada correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente, estado invalido o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado por la configuracion de seguridad.", content = @Content)
+    })
     public ResponseEntity<?> cancelar(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.cancelarCita(id, obtenerIdUsuarioAutenticado()));
@@ -152,6 +229,12 @@ public class CitaServicioController {
     // 10. LISTAR MIS CITAS
     // ──────────────────────────────────────────────────────────────────────────
     @GetMapping("/mis-citas")
+    @Operation(summary = "Listar mis citas", description = "**Requiere Token JWT valido (BearerAuth)**<br><br>Devuelve todas las citas donde participa el usuario autenticado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de citas del usuario.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado por la configuracion de seguridad.", content = @Content)
+    })
     public ResponseEntity<List<CitaServicioResponseDTO>> misCitas() {
         return ResponseEntity.ok(citaService.listarMisCitas(obtenerIdUsuarioAutenticado()));
     }
@@ -160,6 +243,13 @@ public class CitaServicioController {
     // 11. DETALLE DE UNA CITA
     // ──────────────────────────────────────────────────────────────────────────
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener detalle de cita", description = "**Requiere Token JWT valido (BearerAuth)**<br><br>Devuelve el detalle de una cita. Solo sus participantes autorizados pueden verla.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Detalle de cita encontrado.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Cita inexistente o usuario sin permisos.", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\": \"Acceso denegado\"}"))),
+            @ApiResponse(responseCode = "401", description = "Token JWT ausente, invalido o expirado.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado por la configuracion de seguridad.", content = @Content)
+    })
     public ResponseEntity<?> detalle(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(citaService.obtenerCita(id, obtenerIdUsuarioAutenticado()));
