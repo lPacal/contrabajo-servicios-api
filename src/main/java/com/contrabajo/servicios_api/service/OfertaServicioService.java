@@ -103,6 +103,10 @@ public class OfertaServicioService {
         OfertaServicio ofertaExistente = ofertaRepository.findById(idOferta)
                 .orElseThrow(() -> new RuntimeException("Oferta de servicio no encontrada."));
 
+        if (Boolean.TRUE.equals(ofertaExistente.getBorrado())) {
+            throw new RuntimeException("No puedes actualizar una oferta eliminada.");
+        }
+
         if (!ofertaExistente.getIdTrabajador().equals(idUsuarioAutenticado)) {
             throw new RuntimeException("Acceso denegado: No puedes editar una oferta que no te pertenece.");
         }

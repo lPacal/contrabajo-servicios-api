@@ -29,7 +29,7 @@ public class ValoracionController {
             String token = authHeader.substring(7); // Quitamos la palabra "Bearer "
 
             // 2. Extraemos el ID del cliente directamente de la "maleta" del token
-            Integer idClienteAutenticado = jwtUtil.extractClaim(token, claims -> claims.get("id", Integer.class));
+            Integer idClienteAutenticado = jwtUtil.extractId(token);
             
             // 3. Pasamos el ID al Service
             valoracionService.crearValoracion(dto, idClienteAutenticado);
@@ -49,7 +49,7 @@ public class ValoracionController {
             }
             String token = authHeader.substring(7);
             // Solo exigimos token valido; las valoraciones del trabajador son publicas para clientes.
-            jwtUtil.extractClaim(token, claims -> claims.get("id", Integer.class));
+            jwtUtil.extractId(token);
             return ResponseEntity.ok(valoracionService.obtenerPorTrabajador(idTrabajador));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -64,7 +64,7 @@ public class ValoracionController {
                 throw new RuntimeException("Token de autorización no encontrado.");
             }
             String token = authHeader.substring(7);
-            Integer idUsuarioAutenticado = jwtUtil.extractClaim(token, claims -> claims.get("id", Integer.class));
+            Integer idUsuarioAutenticado = jwtUtil.extractId(token);
             if (!idCliente.equals(idUsuarioAutenticado)) {
                 throw new RuntimeException("No tienes permiso para consultar estas valoraciones.");
             }
