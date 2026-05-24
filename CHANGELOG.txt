@@ -1,4 +1,20 @@
-VERSION 0.10.0-Pre-Alpha
+❚❙❘ VERSION 0.10.3-Pre-Alpha
+------------------------
+├─• Se agregaron las variables de ambiente del deploy
+└─• Se realizaron los archivos necesario para que se pueda dockerizar
+
+❚❙❘ VERSION 0.10.2-Pre-Alpha
+------------------------
+├─• Documentacion Swagger/OpenAPI para controladores de servicios-api con tags, operaciones y respuestas explicitas.
+├─• Anotacion @Schema en DTOs de entrada y salida para exponer contratos en español.
+├─• OpenApiConfig y springdoc alineados con la estructura base de usuarios-api.
+└─• application.yml refactorizado para seguir el mismo orden y convenciones del resto del proyecto.
+
+❚❙❘ VERSION 0.10.1-Pre-Alpha
+------------------------
+└─• Corrección de tests de service y controller: firmas de método alineadas, stubs innecesarios eliminados y mocks JwtUtil ajustados para pasar todos los tests unitarios.
+
+❚❙❘ VERSION 0.10.0-Pre-Alpha
 ------------------------
 - Refuerzo de permisos de moderacion sobre ofertas reportadas.
 - Compatibilidad con desactivacion y eliminacion de servicio desde resolucion moderador.

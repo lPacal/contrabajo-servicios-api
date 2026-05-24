@@ -14,6 +14,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.client.RestTemplate; // <-- NUEVO IMPORT
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -23,6 +24,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Value("${MS_USUARIOS_URL:http://localhost:8081}")
+    private String msUsuariosUrl;
 
     @Override
     protected void doFilterInternal(
@@ -54,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     RestTemplate restTemplate = new RestTemplate();
                     // OJO: Asegúrate de que el puerto sea el de MS_Usuarios (8081)
-                    String url = "http://localhost:8081/api/auth/validar-bd?token=" + jwt; 
+                    String url = msUsuariosUrl + "/api/auth/validar-bd?token=" + jwt; 
                     Boolean respuesta = restTemplate.getForObject(url, Boolean.class);
                     tokenActivoEnDb = Boolean.TRUE.equals(respuesta);
                 } catch (Exception e) {

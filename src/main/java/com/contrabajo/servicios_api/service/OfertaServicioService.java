@@ -13,6 +13,7 @@ import com.contrabajo.servicios_api.repository.TipoPrecioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -26,6 +27,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @org.hibernate.annotations.SQLRestriction("borrado = 0")
 public class OfertaServicioService {
+
+    @Value("${MS_USUARIOS_URL:http://localhost:8081}")
+    private String msUsuariosUrl;
 
     private final OfertaServicioRepository ofertaRepository;
     private final CategoriaServicioRepository categoriaRepository;
@@ -240,7 +244,7 @@ public class OfertaServicioService {
             headers.set("Authorization", authorizationHeader);
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             UsuarioUbicacionDTO usuario = restTemplate.exchange(
-                    "http://localhost:8081/api/usuarios/" + idTrabajador,
+                    msUsuariosUrl + "/api/usuarios/" + idTrabajador,
                     HttpMethod.GET,
                     entity,
                     UsuarioUbicacionDTO.class
