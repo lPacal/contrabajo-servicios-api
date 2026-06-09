@@ -9,6 +9,7 @@ Este microservicio es el motor principal de negocio de la plataforma **Contrabaj
 * El catálogo base de estados ya se repuebla de forma idempotente al iniciar el servicio.
 * El backend expone los catálogos de categorías y tipos de precio para el front.
 * La respuesta de ofertas ya entrega los ids de categoría y tipo de precio para sincronizar edición y detalle.
+* Los límites de servicios ahora dependen del rol leído del JWT: **PREMIUM** permite 3 activos / 5 totales y **TRABAJADOR** mantiene 1 activo / 3 totales, validados en `crear()` y al cambiar disponibilidad.
 * El microservicio sigue alineado con la rama `integracion` y con los snapshots backend de esta iteración.
 
 ## Tecnologías y Arquitectura

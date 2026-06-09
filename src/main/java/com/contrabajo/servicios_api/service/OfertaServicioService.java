@@ -39,8 +39,13 @@ public class OfertaServicioService {
     // 1. CREAR
     // ==========================================
     @Transactional
-    public OfertaServicioResponseDTO crear(OfertaServicioCreateDTO dto, Integer idUsuarioAutenticado, String authorizationHeader) {
-        
+    public OfertaServicioResponseDTO crear(OfertaServicioCreateDTO dto, Integer idUsuarioAutenticado, String rolUsuarioAutenticado, String authorizationHeader) {
+
+        int limiteTotal = limiteTotales(rolUsuarioAutenticado);
+        if (contarNoBorradas(idUsuarioAutenticado) >= limiteTotal) {
+            throw new RuntimeException("Alcanzaste el limite de " + limiteTotal + " servicios en total.");
+        }
+
         OfertaServicio nuevaOferta = new OfertaServicio();
         nuevaOferta.setTitulo(dto.getTitulo());
         nuevaOferta.setDescripcion(dto.getDescripcion());
@@ -137,8 +142,8 @@ public class OfertaServicioService {
     }
 
     @Transactional
-    public OfertaServicioResponseDTO activarDisponibilidad(Integer idOferta, Integer idUsuarioAutenticado, String authorizationHeader) {
-        return cambiarDisponibilidad(idOferta, idUsuarioAutenticado, "", true, authorizationHeader);
+    public OfertaServicioResponseDTO activarDisponibilidad(Integer idOferta, Integer idUsuarioAutenticado, String rolUsuarioAutenticado, String authorizationHeader) {
+        return cambiarDisponibilidad(idOferta, idUsuarioAutenticado, rolUsuarioAutenticado, true, authorizationHeader);
     }
 
     @Transactional
@@ -189,17 +194,46 @@ public class OfertaServicioService {
             }
             throw new RuntimeException("No puedes cambiar la disponibilidad de una oferta eliminada.");
         }
-        if (Boolean.TRUE.equals(disponible) && existeOtroServicioActivo(ofertaExistente.getIdTrabajador(), ofertaExistente.getId())) {
-            throw new RuntimeException("Ya tienes un servicio activo. Desactivalo antes de activar otro.");
+        if (Boolean.TRUE.equals(disponible)) {
+            int limite = limiteActivos(rolUsuarioAutenticado);
+            if (contarActivos(ofertaExistente.getIdTrabajador(), ofertaExistente.getId()) >= limite) {
+                throw new RuntimeException("Alcanzaste el limite de " + limite + " servicio(s) activo(s). Desactiva uno antes de activar otro.");
+            }
         }
         ofertaExistente.setDisponible(disponible);
         OfertaServicio actualizada = ofertaRepository.save(ofertaExistente);
         return convertirADto(actualizada, authorizationHeader);
     }
 
-    private boolean existeOtroServicioActivo(Integer idTrabajador, Integer idOfertaExcluir) {
+    // ==========================================
+    // Limites por rol (PREMIUM vs trabajador normal)
+    // ==========================================
+    private boolean esPremium(String rol) {
+        return "PREMIUM".equalsIgnoreCase(rol);
+    }
+
+    private int limiteActivos(String rol) {
+        return esPremium(rol) ? 3 : 1;
+    }
+
+    private int limiteTotales(String rol) {
+        return esPremium(rol) ? 5 : 3;
+    }
+
+    // Cuenta los servicios actualmente activos del trabajador (excluyendo uno opcional).
+    private long contarActivos(Integer idTrabajador, Integer idOfertaExcluir) {
         return ofertaRepository.findByIdTrabajadorOrderByFechaPublicacionDesc(idTrabajador).stream()
-                .anyMatch(oferta -> !oferta.getId().equals(idOfertaExcluir) && Boolean.TRUE.equals(oferta.getDisponible()) && !Boolean.TRUE.equals(oferta.getBorrado()));
+                .filter(oferta -> (idOfertaExcluir == null || !oferta.getId().equals(idOfertaExcluir))
+                        && Boolean.TRUE.equals(oferta.getDisponible())
+                        && !Boolean.TRUE.equals(oferta.getBorrado()))
+                .count();
+    }
+
+    // Cuenta los servicios no eliminados del trabajador (para el limite total).
+    private long contarNoBorradas(Integer idTrabajador) {
+        return ofertaRepository.findByIdTrabajadorOrderByFechaPublicacionDesc(idTrabajador).stream()
+                .filter(oferta -> !Boolean.TRUE.equals(oferta.getBorrado()))
+                .count();
     }
 
     private void validarPropietario(OfertaServicio oferta, Integer idUsuarioAutenticado) {

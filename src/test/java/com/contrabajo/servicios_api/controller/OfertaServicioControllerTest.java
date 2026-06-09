@@ -76,8 +76,9 @@ class OfertaServicioControllerTest {
     void testCrearOferta_Exitoso() throws Exception {
         when(request.getHeader("Authorization")).thenReturn("Bearer token123");
         when(jwtUtil.extractId("token123")).thenReturn(1);
-        // Nueva firma: crear(dto, idUsuario, authorizationHeader)
-        when(ofertaService.crear(any(), anyInt(), anyString())).thenReturn(responseDTO);
+        when(jwtUtil.extractRol("token123")).thenReturn("TRABAJADOR");
+        // Nueva firma: crear(dto, idUsuario, rol, authorizationHeader)
+        when(ofertaService.crear(any(), anyInt(), anyString(), anyString())).thenReturn(responseDTO);
 
         mockMvc.perform(post("/api/ofertas")
                 .header("Authorization", "Bearer token123")
@@ -87,7 +88,7 @@ class OfertaServicioControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.titulo").value("Reparación de electrodomésticos"));
 
-        verify(ofertaService, times(1)).crear(any(), anyInt(), anyString());
+        verify(ofertaService, times(1)).crear(any(), anyInt(), anyString(), anyString());
     }
 
     // ==========================================
@@ -97,7 +98,8 @@ class OfertaServicioControllerTest {
     void testCrearOferta_Error() throws Exception {
         when(request.getHeader("Authorization")).thenReturn("Bearer token123");
         when(jwtUtil.extractId("token123")).thenReturn(1);
-        when(ofertaService.crear(any(), anyInt(), anyString()))
+        when(jwtUtil.extractRol("token123")).thenReturn("TRABAJADOR");
+        when(ofertaService.crear(any(), anyInt(), anyString(), anyString()))
                 .thenThrow(new RuntimeException("Límite de ofertas alcanzado"));
 
         mockMvc.perform(post("/api/ofertas")

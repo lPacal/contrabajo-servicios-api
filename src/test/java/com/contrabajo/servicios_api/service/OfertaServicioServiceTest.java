@@ -99,7 +99,7 @@ class OfertaServicioServiceTest {
         when(ofertaRepository.save(any(OfertaServicio.class))).thenReturn(ofertaMock);
 
         // Act
-        OfertaServicioResponseDTO resultado = ofertaService.crear(crearDTO, idTrabajador, authorizationHeader);
+        OfertaServicioResponseDTO resultado = ofertaService.crear(crearDTO, idTrabajador, "TRABAJADOR", authorizationHeader);
 
         // Assert
         assertNotNull(resultado);
@@ -118,7 +118,7 @@ class OfertaServicioServiceTest {
         when(ofertaRepository.save(any(OfertaServicio.class))).thenReturn(ofertaMock);
 
         // Act
-        OfertaServicioResponseDTO resultado = ofertaService.crear(crearDTO, idTrabajador, authorizationHeader);
+        OfertaServicioResponseDTO resultado = ofertaService.crear(crearDTO, idTrabajador, "TRABAJADOR", authorizationHeader);
 
         // Assert
         assertNotNull(resultado);
@@ -136,7 +136,7 @@ class OfertaServicioServiceTest {
         when(ofertaRepository.save(any(OfertaServicio.class))).thenReturn(ofertaMock);
 
         // Act
-        OfertaServicioResponseDTO resultado = ofertaService.crear(crearDTO, idTrabajador, authorizationHeader);
+        OfertaServicioResponseDTO resultado = ofertaService.crear(crearDTO, idTrabajador, "TRABAJADOR", authorizationHeader);
 
         // Assert
         assertNotNull(resultado);
@@ -154,7 +154,7 @@ class OfertaServicioServiceTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> ofertaService.crear(crearDTO, idTrabajador, authorizationHeader));
+                () -> ofertaService.crear(crearDTO, idTrabajador, "TRABAJADOR", authorizationHeader));
         assertTrue(exception.getMessage().contains("categoría") ||
                    exception.getMessage().contains("categor"));
     }

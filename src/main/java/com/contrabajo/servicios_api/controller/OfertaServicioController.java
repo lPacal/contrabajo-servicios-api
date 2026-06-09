@@ -76,7 +76,8 @@ public class OfertaServicioController {
     public ResponseEntity<?> crearOferta(@RequestBody OfertaServicioCreateDTO dto) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            OfertaServicioResponseDTO nuevaOferta = ofertaService.crear(dto, idUsuario, obtenerAuthorizationHeader());
+            String rol = obtenerRolUsuarioAutenticado();
+            OfertaServicioResponseDTO nuevaOferta = ofertaService.crear(dto, idUsuario, rol, obtenerAuthorizationHeader());
             return ResponseEntity.status(201).body(nuevaOferta);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -219,7 +220,8 @@ public class OfertaServicioController {
     public ResponseEntity<?> activarDisponibilidad(@PathVariable Integer id) {
         try {
             Integer idUsuario = obtenerIdUsuarioAutenticado();
-            OfertaServicioResponseDTO ofertaActualizada = ofertaService.activarDisponibilidad(id, idUsuario, obtenerAuthorizationHeader());
+            String rol = obtenerRolUsuarioAutenticado();
+            OfertaServicioResponseDTO ofertaActualizada = ofertaService.activarDisponibilidad(id, idUsuario, rol, obtenerAuthorizationHeader());
             return ResponseEntity.ok(ofertaActualizada);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

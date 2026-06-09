@@ -1,3 +1,11 @@
+❚❙❘ VERSION 1.1.0-Alpha (Limites por rol Premium)
+------------------------
+├─• Limites de servicios por rol: PREMIUM permite 3 activos / 5 totales; TRABAJADOR mantiene 1 activo / 3 totales.
+├─• OfertaServicioService.crear() valida el limite total de servicios segun el rol del JWT.
+├─• cambiarDisponibilidad reemplaza el bloqueo binario por un conteo de activos contra el limite del rol.
+├─• El rol PREMIUM se reconoce automaticamente desde el claim del JWT (ROLE_PREMIUM) en el filtro existente.
+└─• Tests unitarios de ofertas actualizados a las nuevas firmas (crear/activar con rol).
+
 ❚❙❘ VERSION 1.0.0-Alpha
 ------------------------
 ├─• Se modifico el model de Foto para que no reciba una foto en crudo, tan solo una URL
