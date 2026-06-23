@@ -43,7 +43,7 @@ public class CitaServicioController {
     // 1. SOLICITAR — cliente crea la cita en PENDIENTE
     // ──────────────────────────────────────────────────────────────────────────
     @PostMapping("/solicitar")
-    @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    @PreAuthorize("hasAnyRole('CLIENTE','TRABAJADOR','PREMIUM')")
     @Operation(
             summary = "Solicitar cita",
             description = "**Requiere rol CLIENTE o PREMIUM (BearerAuth)**<br><br>" +
@@ -110,7 +110,7 @@ public class CitaServicioController {
     // 4. REENVIAR PROPUESTA — RECHAZADA → PENDIENTE (cliente)
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/reenviar")
-    @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    @PreAuthorize("hasAnyRole('CLIENTE','TRABAJADOR','PREMIUM')")
     @Operation(summary = "Reenviar propuesta de cita", description = "**Requiere rol CLIENTE o PREMIUM (BearerAuth)**<br><br>Devuelve una cita rechazada al estado pendiente para que el trabajador pueda revisarla nuevamente.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Propuesta reenviada correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
@@ -150,7 +150,7 @@ public class CitaServicioController {
     // 6. CONFIRMAR INICIO — COMENZANDO → EN_PROCESO (cliente confirma)
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/confirmar-inicio")
-    @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    @PreAuthorize("hasAnyRole('CLIENTE','TRABAJADOR','PREMIUM')")
     @Operation(summary = "Confirmar inicio de trabajo", description = "**Requiere rol CLIENTE o PREMIUM (BearerAuth)**<br><br>El cliente confirma que el trabajo comenzo y la cita pasa a estado en proceso.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Inicio confirmado correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),
@@ -190,7 +190,7 @@ public class CitaServicioController {
     // 8. CONFIRMAR FINALIZACION — FINALIZANDO → FINALIZADO (cliente confirma)
     // ──────────────────────────────────────────────────────────────────────────
     @PatchMapping("/{id}/confirmar-finalizacion")
-    @PreAuthorize("hasAnyRole('CLIENTE','PREMIUM')")
+    @PreAuthorize("hasAnyRole('CLIENTE','TRABAJADOR','PREMIUM')")
     @Operation(summary = "Confirmar finalizacion de trabajo", description = "**Requiere rol CLIENTE o PREMIUM (BearerAuth)**<br><br>El cliente confirma que el trabajo finalizo y la cita pasa a estado finalizado.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Finalizacion confirmada correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CitaServicioResponseDTO.class))),

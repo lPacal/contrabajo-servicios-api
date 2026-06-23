@@ -170,6 +170,136 @@ class OfertaServicioControllerTest {
     }
 
     // ==========================================
+    // Test: Obtener disponibilidad de oferta
+    // ==========================================
+    @Test
+    void testObtenerDisponibilidad_Exitoso() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(ofertaService.obtenerDisponibilidad(eq(1), anyInt())).thenReturn(true);
+
+        mockMvc.perform(get("/api/ofertas/{id}/disponibilidad", 1)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(true));
+
+        verify(ofertaService, times(1)).obtenerDisponibilidad(1, 1);
+    }
+
+    @Test
+    void testObtenerDisponibilidad_Error() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(ofertaService.obtenerDisponibilidad(anyInt(), anyInt()))
+                .thenThrow(new RuntimeException("Oferta no encontrada"));
+
+        mockMvc.perform(get("/api/ofertas/{id}/disponibilidad", 1)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").value(false));
+    }
+
+    // ==========================================
+    // Test: Activar disponibilidad de oferta
+    // ==========================================
+    @Test
+    void testActivarDisponibilidad_Exitoso() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(jwtUtil.extractRol("token123")).thenReturn("TRABAJADOR");
+        when(ofertaService.activarDisponibilidad(anyInt(), anyInt(), anyString(), anyString()))
+                .thenReturn(responseDTO);
+
+        mockMvc.perform(patch("/api/ofertas/{id}/disponibilidad/activar", 1)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+
+        verify(ofertaService, times(1)).activarDisponibilidad(1, 1, "TRABAJADOR", "Bearer token123");
+    }
+
+    @Test
+    void testActivarDisponibilidad_Error() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(jwtUtil.extractRol("token123")).thenReturn("TRABAJADOR");
+        when(ofertaService.activarDisponibilidad(anyInt(), anyInt(), anyString(), anyString()))
+                .thenThrow(new RuntimeException("Oferta no encontrada"));
+
+        mockMvc.perform(patch("/api/ofertas/{id}/disponibilidad/activar", 1)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Oferta no encontrada"));
+    }
+
+    // ==========================================
+    // Test: Desactivar disponibilidad de oferta
+    // ==========================================
+    @Test
+    void testDesactivarDisponibilidad_Exitoso() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(jwtUtil.extractRol("token123")).thenReturn("TRABAJADOR");
+        when(ofertaService.desactivarDisponibilidad(anyInt(), anyInt(), anyString(), anyString()))
+                .thenReturn(responseDTO);
+
+        mockMvc.perform(patch("/api/ofertas/{id}/disponibilidad/desactivar", 1)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+
+        verify(ofertaService, times(1)).desactivarDisponibilidad(1, 1, "TRABAJADOR", "Bearer token123");
+    }
+
+    @Test
+    void testDesactivarDisponibilidad_Error() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(jwtUtil.extractRol("token123")).thenReturn("TRABAJADOR");
+        when(ofertaService.desactivarDisponibilidad(anyInt(), anyInt(), anyString(), anyString()))
+                .thenThrow(new RuntimeException("Oferta no encontrada"));
+
+        mockMvc.perform(patch("/api/ofertas/{id}/disponibilidad/desactivar", 1)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Oferta no encontrada"));
+    }
+
+    // ==========================================
+    // Test: Actualizar oferta con PUT
+    // ==========================================
+    @Test
+    void testActualizarOfertaPut_Exitoso() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(ofertaService.actualizar(anyInt(), any(), anyInt(), anyString())).thenReturn(responseDTO);
+
+        mockMvc.perform(put("/api/ofertas/{id}", 1)
+                .header("Authorization", "Bearer token123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(actualizarDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+
+        verify(ofertaService, times(1)).actualizar(anyInt(), any(), anyInt(), anyString());
+    }
+
+    @Test
+    void testActualizarOfertaPut_Error() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(ofertaService.actualizar(anyInt(), any(), anyInt(), anyString()))
+                .thenThrow(new RuntimeException("Acceso denegado"));
+
+        mockMvc.perform(put("/api/ofertas/{id}", 1)
+                .header("Authorization", "Bearer token123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(actualizarDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Acceso denegado"));
+    }
+
+    // ==========================================
     // Test: Listar ofertas por trabajador
     // ==========================================
     @Test

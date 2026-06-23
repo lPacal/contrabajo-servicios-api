@@ -1,6 +1,7 @@
 package com.contrabajo.servicios_api.controller;
 
 import com.contrabajo.servicios_api.dto.ValoracionRequestDTO;
+import com.contrabajo.servicios_api.dto.ValoracionResponseDTO;
 import com.contrabajo.servicios_api.service.ValoracionService;
 import com.contrabajo.servicios_api.utils.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,9 +15,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -36,6 +40,7 @@ class ValoracionControllerTest {
 
     private ObjectMapper objectMapper;
     private ValoracionRequestDTO valoracionDTO;
+    private ValoracionResponseDTO responseDTO;
 
     @BeforeEach
     void setUp() {
@@ -47,6 +52,14 @@ class ValoracionControllerTest {
         valoracionDTO.setIdCita(1);
         valoracionDTO.setVoto((short) 5);
         valoracionDTO.setComentario("Excelente servicio");
+
+        responseDTO = new ValoracionResponseDTO();
+        responseDTO.setId(1L);
+        responseDTO.setIdCita(1);
+        responseDTO.setIdCliente(1);
+        responseDTO.setIdTrabajador(2);
+        responseDTO.setVoto((short) 5);
+        responseDTO.setComentario("Excelente servicio");
     }
 
     // ==========================================
@@ -242,5 +255,63 @@ class ValoracionControllerTest {
                 .andExpect(jsonPath("$.mensaje").value("La valoración ha sido registrada con éxito."));
 
         verify(valoracionService, times(1)).crearValoracion(any(), anyInt());
+    }
+
+    // ==========================================
+    // Test: Obtener valoraciones por trabajador
+    // ==========================================
+    @Test
+    void testObtenerPorTrabajador_Exitoso() throws Exception {
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(valoracionService.obtenerPorTrabajador(eq(2))).thenReturn(List.of(responseDTO));
+
+        mockMvc.perform(get("/api/valoraciones/trabajador/{idTrabajador}", 2)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].idCita").value(1));
+
+        verify(valoracionService, times(1)).obtenerPorTrabajador(2);
+    }
+
+    @Test
+    void testObtenerPorTrabajador_SinToken() throws Exception {
+        mockMvc.perform(get("/api/valoraciones/trabajador/{idTrabajador}", 2))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Token de autorización no encontrado."));
+    }
+
+    // ==========================================
+    // Test: Obtener valoraciones por cliente
+    // ==========================================
+    @Test
+    void testObtenerPorCliente_Exitoso() throws Exception {
+        when(jwtUtil.extractId("token123")).thenReturn(10);
+        when(valoracionService.obtenerPorCliente(eq(10))).thenReturn(List.of(responseDTO));
+
+        mockMvc.perform(get("/api/valoraciones/cliente/{idCliente}", 10)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].idCliente").value(1));
+
+        verify(valoracionService, times(1)).obtenerPorCliente(10);
+    }
+
+    @Test
+    void testObtenerPorCliente_AccesoDenegado() throws Exception {
+        when(jwtUtil.extractId("token123")).thenReturn(11);
+
+        mockMvc.perform(get("/api/valoraciones/cliente/{idCliente}", 10)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("No tienes permiso para consultar estas valoraciones."));
+    }
+
+    @Test
+    void testObtenerPorCliente_SinToken() throws Exception {
+        mockMvc.perform(get("/api/valoraciones/cliente/{idCliente}", 10))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Token de autorización no encontrado."));
     }
 }

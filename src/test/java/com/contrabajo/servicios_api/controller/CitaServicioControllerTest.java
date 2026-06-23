@@ -9,11 +9,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;import org.mockito.Mock;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -253,6 +255,58 @@ class CitaServicioControllerTest {
                 .andExpect(jsonPath("$.id").value(1));
 
         verify(citaService, times(1)).cancelarCita(1, 1);
+    }
+
+    // ==========================================
+    // Test: Reenviar propuesta (cliente) → /reenviar
+    // ==========================================
+    @Test
+    void testReenviar_Exitoso() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(citaService.reenviarPropuesta(anyInt(), anyInt())).thenReturn(responseDTO);
+
+        mockMvc.perform(patch("/api/citas/{id}/reenviar", 1)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+
+        verify(citaService, times(1)).reenviarPropuesta(1, 1);
+    }
+
+    // ==========================================
+    // Test: Listar mis citas (cliente) → /mis-citas
+    // ==========================================
+    @Test
+    void testMisCitas_Exitoso() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(citaService.listarMisCitas(anyInt())).thenReturn(List.of(responseDTO));
+
+        mockMvc.perform(get("/api/citas/mis-citas")
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(1));
+
+        verify(citaService, times(1)).listarMisCitas(1);
+    }
+
+    // ==========================================
+    // Test: Detalle de cita (cliente/trabajador) → /{id}
+    // ==========================================
+    @Test
+    void testDetalle_Exitoso() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token123");
+        when(jwtUtil.extractId("token123")).thenReturn(1);
+        when(citaService.obtenerCita(anyInt(), anyInt())).thenReturn(responseDTO);
+
+        mockMvc.perform(get("/api/citas/{id}", 1)
+                .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+
+        verify(citaService, times(1)).obtenerCita(1, 1);
     }
 
     // ==========================================
